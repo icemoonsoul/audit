@@ -1,0 +1,306 @@
+###############################################################################
+# Description:
+# [*****]		--	rule postion, where would be invoked.
+# .x			--	step sequence
+# Match Unit:
+#  * PROTOCOL	--  match protocol id, UDP or TCP
+#  * DST_IP		--	match destination ip address of connection
+#  * DST_PORT	--	match destination port of connection
+#  * SRC_IP		--	match source ip address of connection
+#  * SRC_PORT	--	match source port address of connection
+#  * APP		--  match protocol name
+#  * URL		--	match url
+#  * SIG_PRIO   --  match priority of the app's signature
+#  * HISTORY	--	match history event
+#  * REALTIME	--	match real time statistics(to be continued)
+#  		-- REALTIME(APP, "app name")
+#  		-- REALTIME(SESSION_APP, "app name")
+#  		-- REALTIME(P2P)
+#  		-- REALTIME(PORT_CLUSTER)
+#  		-- REALTIME(PORT_SERIES)
+# Logic Operator & Priority & Associativity(According to C Program Language):
+#  * ()			--  bracket
+#  * !			--  Not
+#  * &&			--  And
+#  * ||			--  Or
+# Compare Operator 
+#  * ==
+#  * !=
+#  * >
+#  * <
+#  * >=
+#  * <=
+#  ...
+# Action Flow:
+#  * GOTO		--	jump to specified step in rule
+#  * CONTINUE	--	match next rule
+#  * RETURN		--	exit and return the result
+#
+# Function:
+#  * RECORD		--  record the protocol's event
+###############################################################################
+
+
+###############################################################################################
+[POST_DPI]
+	.1 (APP == "emule_5") ? GOTO(2) : CONTINUE;
+	.2 RECORD("emule_login", 3600);
+	.3 DETECT("emule"); RETURN;
+
+#[POST_DPI]
+#	.1 (APP == "emule" || APP == "emule_3") ? GOTO(2) : CONTINUE;
+#	.2 (SRC_PORT > 5000 || DST_PORT > 5000) ? RETURN : GOTO(3);
+#	.3 (HISTORY("emule_login") == TRUE) ? GOTO(4) : GOTO(5);
+#	.4 DETECT("emule"); RETURN;
+#	.5 DETECT("NA"); RETURN;
+
+[POST_DPI]
+	.1 (APP == "emule" || APP == "emule_3") ? GOTO(2) : CONTINUE;
+	.2 (HISTORY("emule_login") == TRUE) ? GOTO(3) : GOTO(4);
+	.3 DETECT("emule"); RETURN;
+	.4 DETECT("NA"); RETURN;
+
+#####################################################################################################
+[POST_DPI]
+	.1 (APP == "flashget") ? GOTO(2) : CONTINUE;
+	.2 RECORD("flashget exsit", 3600);
+	.3 DETECT("flashget"); RETURN;
+
+[POST_DPI]
+	.1 (APP == "bt") ? GOTO(2) : CONTINUE;
+	.2 HISTORY("flashget exsit") == TRUE ? GOTO(3): GOTO(4);
+    .3 DETECT("flashget"); RETURN;
+	.4 DETECT("bt"); RETURN;
+####################################################################################################	
+[POST_DPI]
+    .1 (APP == "guang-da-zheng-quan-jin-yang-guang") ? GOTO(2) : CONTINUE;
+    .2 RECORD("guang-da-zheng-quan-jin-yang-guang exist",3600);
+    .3 DETECT("guang-da-zheng-quan-jin-yang-guang"); RETURN;
+     
+[POST_DPI]
+	.1 (APP == "tong-da-xin") ? GOTO(2) :CONTINUE;
+    .2 HISTORY("guang-da-zheng-quan-jin-yang-guang exist") == TRUE ? GOTO(3) : GOTO(4);
+    .3 DETECT("guang-da-zheng-quan-jin-yang-guang"); RETURN;
+    .4 DETECT("tong-da-xin"); RETURN;
+######################################################################################################	     
+[POST_DPI]
+    .1 (APP == "rdp") ? GOTO(2) : CONTINUE;
+    .2 RECORD("rdp exist",3600); 
+    .3 DETECT("rdp"); RETURN;
+
+[POST_DPI]
+    .1 (APP == "dameware") ? GOTO(2) : CONTINUE;
+    .2 HISTORY("rdp exist") == TRUE ? GOTO(3) : GOTO(4);
+    .3 DETECT("rdp"); RETURN;
+    .4 DETECT("dameware"); RETURN;
+ ####################################################################################################
+[POST_DPI]
+    .1 (APP == "qi-lu-zheng-quan") ? GOTO(2) : CONTINUE;
+    .2 RECORD("qi-lu-zheng-quan exist",3600);
+    .3 DETECT("qi-lu-zheng-quan"); RETURN;
+
+[POST_DPI]
+    .1 (APP == "da-jiao-yi-shi") ? GOTO(2) : CONTINUE;
+    .2 HISTORY("qi-lu-zheng-quan exist") == TRUE ? GOTO(3) : GOTO(4);
+    .3 DETECT("qi-lu-zheng-quan"); RETURN;
+    .4 DETECT("da-jiao-yi-shi"); RETURN;
+ ####################################################################################################
+[POST_DPI]
+	.1 (APP == "qvod_7") ? GOTO(2) : CONTINUE;
+	.2 RECORD("qvod exist", 3600); 
+	.3 DETECT("qvod"); RETURN;
+
+[POST_DPI]
+	.1 (APP == "bai-du-ying-yin_2") ? GOTO(2) : CONTINUE;
+	.2 (HISTORY("qvod exist") == TRUE) ? GOTO(3) : GOTO(4);
+	.3 DETECT("qvod"); RETURN;
+	.4 DETECT("bai-du-ying-yin"); RETURN;
+#################################################################################
+[POST_DPI]
+	.1 (APP == "xun-lei-kan-kan") ? GOTO(2) : CONTINUE;
+	.2 RECORD("xun-lei-kan-kan exsit", 3600); 
+	.3 DETECT("xun-lei-kan-kan");RETURN;
+
+#[POST_DPI]
+#	.1 (APP == "xunlei_12") ? GOTO(2) : CONTINUE;
+#	.2 HISTORY("xun-lei-kan-kan exsit") == TRUE ? GOTO(3):GOTO(4);
+#    .3 DETECT("xun-lei-kan-kan");RETURN; 
+#    .4 DETECT("xunlei"); RETURN;
+#############################################################################################
+#[PRE_DPI]
+#	.1 (URL == "GET.*qqmusic.qq.com") ? GOTO(2) : CONTINUE;
+#	.2 RECORD("qq-music exsit", 3600); RETURN("qq-music");
+#
+#[POST_DPI]
+#	.1 (APP == "qq-music_4") ? GOTO(2) : CONTINUE;
+#	.2 HISTORY("qq-music exsit") == TRUE ? RETURN("qq-music") : RETURN("NA");
+########################################################################################
+[POST_DPI]
+    .1 (APP == "qq-input-upgrade") ? GOTO(2) : CONTINUE;
+    .2 RECORD("qq-input-upgrade exist",3600);
+    .3 DETECT("qq-input-upgrade"); RETURN;
+
+[POST_DPI]
+    .1 (APP == "qq-xuan-feng_5") ? GOTO(2) :CONTINUE;
+    .2 HISTORY("qq-input-upgrade exist") == TRUE ? GOTO(3) : GOTO(4);
+    .3 DETECT("qq-input-upgrade"); RETURN;
+    .4 DETECT("qq-xuan-feng_5"); RETURN;
+########################################################################################   
+#[PRE_DPI]
+#	.1 (URL == "GET.*v.qq.com.hot.*Host: pinghot.qq.com") ? GOTO(2) : CONTINUE;
+#	.2 RECORD("qq-video exsit", 3600); 
+#	.3 DETECT("qq-video"); RETURN;
+
+#[POST_DPI]
+#	.1 (APP == "qq-video_5") ? GOTO(2) : CONTINUE;
+#	.2 RECORD("qq-video exsit", 3600); 
+#	.3 DETECT("qq-video"); RETURN;
+
+#[PRE_DPI]
+#	.1 (URL == ".*QQLive\.exe") ? GOTO(2) : CONTINUE;
+#	.2 RECORD("qq-live exsit", 3600); 
+#	.3 DETECT("qq-live"); RETURN;
+
+[POST_DPI]
+	.1 (APP == "qq-live_10") ? GOTO(2) : CONTINUE;
+	.2 RECORD("qq-live exsit", 3600); 
+	.3 DETECT("qq-live"); RETURN;
+
+#[PRE_DPI]
+#	.1 (URL == "GET.*qqmusic_version") ? GOTO(2) : CONTINUE;
+#	.2 RECORD("qq-music exsit", 3600); 
+#	.3 DETECT("qq-music"); RETURN;
+
+[POST_DPI]
+	.1 (APP == "qq-music_8") ? GOTO(2) : CONTINUE;
+	.2 RECORD("qq-music exsit", 3600); 
+	.3 DETECT("qq-music"); RETURN;
+
+########################################################################################  
+[POST_DPI]
+	.1 (APP == "qq-live_1" || APP == "qq-live_3") ? GOTO(2) : CONTINUE;
+	.2 HISTORY("qq-live exsit") == TRUE ? GOTO(3) : GOTO(4);
+	.3 DETECT("qq-live"); RETURN;
+	.4 HISTORY("qq-music exsit") == TRUE ? GOTO(5) : GOTO(6);
+	.5 DETECT("qq-music"); RETURN;
+	.6 DETECT("qq-video");
+
+[POST_DPI]
+	.1 (APP == "qq-music_1" || APP == "qq-music_4") ? GOTO(2) : CONTINUE;
+	.2 HISTORY("qq-live exsit") == TRUE ? GOTO(3) : GOTO(4);
+	.3 DETECT("qq-live"); RETURN;
+	.4 HISTORY("qq-music exsit") == TRUE ? GOTO(5) : GOTO(6);
+	.5 DETECT("qq-music"); RETURN;
+	.6 DETECT("qq-video");
+
+[POST_DPI]
+	.1 (APP == "qq-music_6") ? GOTO(2) : CONTINUE;
+	.2 HISTORY("qq-music exsit") == TRUE ? GOTO(3) : GOTO(4);
+	.3 DETECT("qq-music"); RETURN;
+	.4 DETECT("qq-video"); 
+	
+[POST_DPI]
+	.1 (APP == "qq-video") ? GOTO(2) : CONTINUE;
+	.2 HISTORY("qq-xuan-feng exsit") == TRUE ? GOTO(3) : GOTO(4);
+	.3 DETECT("qq-xuan-feng"); RETURN;
+	.4 HISTORY("teng-xun-shi-pin-mobile exsit") == TRUE ? GOTO(5) : GOTO(6);
+	.5 DETECT("teng-xun-shi-pin-mobile"); RETURN;
+	.6 DETECT("qq-video"); RETURN;
+######################################################################################## 
+[POST_DPI]
+	.1 (APP == "263-wo-xin-email-mobile_2") ? GOTO(2) : CONTINUE;
+	.2 RECORD("263-wo-xin-email-mobile exist", 3600); 
+	.3 DETECT("263-wo-xin-email-mobile"); RETURN;
+
+[POST_DPI]
+	.1 (APP == "263-mail" || APP == "263em") ? GOTO(2) : CONTINUE;
+	.2 HISTORY("263-wo-xin-email-mobile exist") == TRUE ? GOTO(3) : CONTINUE;
+	.3 DETECT("263-wo-xin-email-mobile"); RETURN;
+	
+######################################################################################## 
+[POST_DPI]
+	.1 (APP == "ku-gou-yin-yue-mobile_4") ? GOTO(2) : CONTINUE;
+	.2 RECORD("ku-gou-yin-yue-mobile exist", 3600); 
+	.3 DETECT("www"); RETURN;
+
+[POST_DPI]
+	.1 (APP == "kugou") ? GOTO(2) : CONTINUE;
+	.2 HISTORY("ku-gou-yin-yue-mobile exist") == TRUE ? GOTO(3) : GOTO(4);
+	.3 DETECT("ku-gou-yin-yue-mobile"); RETURN;
+	.4 DETECT("kugou"); RETURN;
+########################################################################################   
+#[POST_DPI]
+#	.1 (APP == "lai-zi-shan-zhuang_1") ? GOTO(2) : CONTINUE;
+#	.2 HISTORY("qq-live exsit") == TRUE ? GOTO(3) : GOTO(4);
+#	.3 DETECT("qq-live"); RETURN;
+#	.4 DETECT("lai-zi-shan-zhuang"); RETURN;
+######################################################################################## 
+[POST_DPI]
+	.1 (APP == "teng-xun-shi-pin-mobile_4") ? GOTO(2) : CONTINUE;
+	.2 RECORD("teng-xun-shi-pin-mobile exsit", 3600); 
+	.3 DETECT("teng-xun-shi-pin-mobile"); RETURN;
+
+[POST_DPI]
+	.1 (APP == "qq-yin-yue-mobile") ? GOTO(2) : CONTINUE;
+	.2 RECORD("qq-yin-yue-mobile exsit", 3600); 
+	.3 DETECT("qq-yin-yue-mobile"); RETURN;
+######################################################################################## 
+[POST_DPI]
+	.1 (APP == "sou-hu-shi-pin-mobile_3" || APP == "sou-hu-shi-pin-mobile_2") ? GOTO(2) : CONTINUE;
+	.2 RECORD("sou-hu-shi-pin-mobile exsit", 3600); 
+	.3 DETECT("sou-hu-shi-pin-mobile"); RETURN;  
+
+[POST_DPI]
+	.1 (APP == "sou-hu-shi-pin-mobile_4") ? GOTO(2) : CONTINUE;
+	.2 RECORD("sou-hu-shi-pin-mobile exsit", 3600); 
+	.3 DETECT("www"); RETURN;  
+	
+[POST_DPI]
+	.1 (APP == "sohu-video") ? GOTO(2) : CONTINUE;
+	.2 HISTORY("sou-hu-shi-pin-mobile exsit") == TRUE ? GOTO(3) : GOTO(4);
+	.3 DETECT("sou-hu-shi-pin-mobile"); RETURN;
+	.4 DETECT("sohu-video"); RETURN;
+########################################################################################  
+[POST_DPI]
+	.1 (APP == "qq-xuan-feng_6") ? GOTO(2) : CONTINUE;
+	.2 RECORD("qq-xuan-feng exsit", 3600); 
+	.3 DETECT("qq-xuan-feng"); RETURN;
+
+#####################################################################################################
+[POST_DPI]
+    .1 (APP == "guo-lian-tong-bao") ? GOTO(2) : CONTINUE;
+    .2 RECORD("guo-lian-tong-bao exist",3600);
+    .3 DETECT("guo-lian-tong-bao"); RETURN;
+
+[POST_DPI]
+    .1 (APP == "tong-da-xin") ? GOTO(2) : CONTINUE;
+    .2 HISTORY("guo-lian-tong-bao exist") == TRUE ? GOTO(3) : GOTO(4);
+    .3 DETECT("guo-lian-tong-bao"); RETURN;
+    .4 DETECT("tong-da-xin"); RETURN;
+######################################################################################################
+[POST_DPI]
+    .1 (APP == "guo-lian-tong-bao") ? GOTO(2) : CONTINUE;
+    .2 RECORD("guo-lian-tong-bao exist",3600);
+    .3 DETECT("guo-lian-tong-bao"); RETURN;
+
+[POST_DPI]
+    .1 (APP == "qian-long") ? GOTO(2) : CONTINUE;
+    .2 HISTORY("guo-lian-tong-bao exist") == TRUE ? GOTO(3) : GOTO(4);
+    .3 DETECT("guo-lian-tong-bao"); RETURN;
+    .4 DETECT("qian-long"); RETURN;
+
+#[POST_DPI]
+#	.1 (APP == "qq-xuan-feng_8") ? GOTO(2) : CONTINUE;
+#	.2 HISTORY("qq-xuan-feng exsit") == TRUE ? GOTO(3) : GOTO(4);
+#	.3 DETECT("qq-xuan-feng"); RETURN;
+#	.4 DETECT("www"); RETURN;
+
+#[POST_DPI]
+#	.1 (APP == "http-download_1") ? GOTO(2) : CONTINUE;
+#	.2 HISTORY("qq-xuan-feng exsit") == TRUE ? GOTO(3) : GOTO(4);
+#	.3 DETECT("qq-xuan-feng"); RETURN;
+#	.4 DETECT("http-download"); RETURN;
+########################################################################################   
+########################################################################################   
+########################################################################################   
+
