@@ -101,6 +101,12 @@ ACCOUNT_NODE_ASCII_S g_stNodeAccount_Ascii[ACCOUNT_NODE_NUM] = {
 
     {"sina-weibo-mobile_1",       "X-Log-Uid: ",         '\r',  "%2540", "@", 1},
     {"qq-weibo-mobile_1",         "p_uin=o",             ';',  "%2540", "@", 1},
+    {"yi-xin_1",                  "mobile=",             ' ',  "%2540", "@", 1},
+    {"lai-wang_1",                "uid=",                '&',  "%2540", "@", 1},
+    {"mo-mo_1",                   "X-KV: ",              '\r', "%2540", "@", 1},
+    {"tao-bao-mobile_2",          "tracknick=",          ';', "%2540", "@", 1},
+
+
 
     /*注意不要越界，END 为结束标志*/
 	{"END", "", ' '},
