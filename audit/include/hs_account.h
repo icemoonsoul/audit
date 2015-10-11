@@ -9,7 +9,7 @@
 #define ACCOUNT_SACN_SMTPNUM_MAX    20
 #define ACCOUNT_SACN_POP3NUM_MAX    6
 
-#define DPI_QQ_CHAT_MOBILE			"qq-chat-mobile_1"
+#define DPI_QQ_CHAT_MOBILE			"qq-chat-mobile_3"
 #define DPI_QQ_CHAT					"qq-chat_5"
 #define DPI_SINA_WEIBO_LOGIN		"sina-wei-bo_12_login"
 #define DPI_WANG_WANG_CHAT		    "wang-wang-chat"

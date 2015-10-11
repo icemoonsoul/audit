@@ -541,42 +541,61 @@ static int QQ_Mobile_Process(HS_CTX_S *pstCtx, HS_PKT_DETAIL_S *pstDetail, void 
     u32  probe_count;
     u32  app_id;
     u32  qq_account;
+    u32  len_data = 0;
+    s32  index = 0;
     char buff[16];
-    u8   len;
+    u8   flag = 0;
+    u8   len = 0;
 
     app_id = atomic_read(&pstCtx->appid);
     probe_count = pstDetail->uProcCount;
 
     /* probe_count limitation*/
-    if (app_id != g_appid_qq_chat_mobile || probe_count > 10) {
+    if (probe_count > 10) {
+        return HS_OK;
+    }    
+    
+    if (MASK_VERSION(app_id) != MASK_VERSION(g_appid_qq_chat_mobile)) {
         return HS_OK;
     }
-
+    
     HS_PLUGIN_SET_MARKED(pstCtx,HS_HOOK_POST_DPI, HS_PLUGIN_ACCOUNT);
-
     HS_PLUGIN_DEAL_STAT(HS_PLUGIN_ACCOUNT);
     if (pstDetail->tuple.protocol != TCP_PROTOCOL) {
         return HS_OK;
     }
 
-    if (pstDetail->length <= (16*23 + 13)) {
+    len_data = pstDetail->length;
+    if (len_data <= 5) {
         return HS_OK;
     }
 
-    len = pstDetail->data[16*23 + 12];
-    if ((16*23 + 13 + len) > pstDetail->length) {
-        return HS_OK;
+    //find number string
+    for (index = 1; index < (len_data-5); index++) {
+        if (HS_OK == dpi_account_check_number(pstDetail->data+index, 5)) {
+            len = *(pstDetail->data + index - 1);
+            //margin is 4, min len is 5, max len is 15
+            if ((len < (4 + 5)) || (len > (4 + 15))) { 
+                continue;
+            }
+
+            len = len - 4;
+            if (len >= (len_data - index)) {
+                continue;
+            }
+
+            if (HS_OK == dpi_account_check_number(pstDetail->data+index, len)) {
+                flag = 1;
+                memset(buff, 0, 16);
+                memcpy(buff, pstDetail->data+index, len);
+                break;
+            }
+        }
     }
 
-    if ((len - 4) >= 16) {
+    //account not found
+    if (flag == 0) {
         return HS_OK;
-    }
-
-    memset(buff, 0, 16);
-    memcpy(buff, pstDetail->data+16*23+13, len-4);
-
-    if (HS_ERR == dpi_account_check_number(buff, len-4)) {
-        return HS_ERR;
     }
 
     HS_WRITE_LOCK_CTX(pstCtx);
@@ -585,7 +604,7 @@ static int QQ_Mobile_Process(HS_CTX_S *pstCtx, HS_PKT_DETAIL_S *pstDetail, void 
     {
         memset(pstCtx->pstAccount, 0, sizeof(struct app_account));
         pstCtx->pstAccount->account_type = ACCOUNT_QQ_CHAT;
-        memcpy(pstCtx->pstAccount->account_buff, buff, len-4);
+        memcpy(pstCtx->pstAccount->account_buff, buff, len);
 		HS_PLUGIN_IDENTIFY_STAT(HS_PLUGIN_ACCOUNT);
         HS_PLUGIN_SET_UNMARKED(pstCtx,HS_HOOK_POST_DPI, HS_PLUGIN_ACCOUNT);
     }
