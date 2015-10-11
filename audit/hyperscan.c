@@ -573,7 +573,7 @@ INT32 main(INT32 argc, CHAR * const *argv)
     } 
     
 	/* nids initialize */
-	iRet = nids_init();
+	iRet = nids_init(1);
 	if (iRet != 1) {
 		HS_FATAL("NIDS init error, Cann't open file?\n");
 		exit(-1);

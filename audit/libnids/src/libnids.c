@@ -573,31 +573,32 @@ static void cap_queue_process_thread()
 
 #endif
 
-int nids_init()
+int nids_init(int with_pcap)
 {
     /* free resources that previous usages might have allocated */
     nids_exit();
 
-#if 0
-    if (nids_params.pcap_desc)
-        desc = nids_params.pcap_desc;
-    else if (nids_params.filename) {
-	if ((desc = pcap_open_offline(nids_params.filename,
-				      nids_errbuf)) == NULL)
-	    return 0;
-    } else if (!open_live())
-	return 0;
+    if (with_pcap > 0) {
+        if (nids_params.pcap_desc) {
+            desc = nids_params.pcap_desc;
+        } else if (nids_params.filename) {
+    	    if ((desc = pcap_open_offline(nids_params.filename, nids_errbuf)) == NULL)
+    	        return 0;
+        } else if (!open_live()) {
+    	    return 0;
+        }
 
-    if (nids_params.pcap_filter != NULL) {
-	u_int mask = 0;
-	struct bpf_program fcode;
+        if (nids_params.pcap_filter != NULL) {
+        	u_int mask = 0;
+        	struct bpf_program fcode;
 
-	if (pcap_compile(desc, &fcode, nids_params.pcap_filter, 1, mask) <
-	    0) return 0;
-	if (pcap_setfilter(desc, &fcode) == -1)
-	    return 0;
+        	if (pcap_compile(desc, &fcode, nids_params.pcap_filter, 1, mask) <
+        	    0) return 0;
+        	if (pcap_setfilter(desc, &fcode) == -1)
+        	    return 0;
+        }
     }
-#endif
+
     linktype = DLT_EN10MB;
     nids_linkoffset = 14;
     goto start;

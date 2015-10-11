@@ -40,11 +40,11 @@ SUBLIBS 	= ${LIBHS}/libhs.a ${LIBNIDS}/libnids.a  ${ZLIB}/libz.a  \
 all: x86 lib dpi hyperscan
 
 x86:
-	./x86_x64.sh -r
+	./x86_x64.sh x86
 	#make target
 
 x64:
-	./x86_x64.sh 
+	./x86_x64.sh x64
 	#make target
 
 lib:

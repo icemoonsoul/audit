@@ -369,7 +369,7 @@ int DPI_Init(void)
         return -1;
 	}
 
-	iRet = nids_init();
+	iRet = nids_init(0);
 	if (iRet != 1) {
 		HS_FATAL("NIDS init error, Cann't open file?\n");
         return -1;

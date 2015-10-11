@@ -182,7 +182,7 @@ struct tcp_timeout
   struct tcp_timeout *prev;
 };
 
-int nids_init (void);
+int nids_init(int with_pcap);
 void nids_register_ip_frag (void (*));
 void nids_unregister_ip_frag (void (*));
 void nids_register_ip (void (*));
