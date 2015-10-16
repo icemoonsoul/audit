@@ -10,7 +10,7 @@
 #define IMEI_INFO_MAX				16
 #define IMSI_INFO_MAX				16
 #define PHONE_INFO_MAX				16
-#define MOBILE_INFO_NODE_MAX 		32
+#define MOBILE_INFO_NODE_MAX 		64
 
 #define HS_SET_MOBILE_INFO_MARKED(flag, move)			((flag) |= (1 << move))
 #define HS_TEST_MOBILE_INFO_MARKED(flag, move)			(flag & 1 << move)
@@ -37,6 +37,7 @@ typedef struct mobile_info_node
     CHAR      sig_end;       				   		/*ÕËºÅ½áÎ²×Ö·û*/
 	DPI_MOBILE_INFO_E	type_info;
 	DPI_PARSER_ACTION_E	parser_action;
+	CHAR	  mark_flag;
 	UINT32    appid;                           		/*APP ID*/
 } MOBILE_INFO_NODE_S;
 
