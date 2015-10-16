@@ -13,39 +13,51 @@
 
 
 MOBILE_INFO_NODE_S g_stNodeMobileInfo[MOBILE_INFO_NODE_MAX] = {
-	{"jing-dong-mobile_1",  			"uuid=",    		'-', 	IMEI_FLAG, 	BREAK_PARSER},
-	{"tao-bao-mobile_1",  				"imei=",    		'&', 	IMEI_FLAG, 	CONTINUE_PARSER},
-	{"tao-bao-mobile_1",  				"imsi=",    		'&', 	IMSI_FLAG, 	BREAK_PARSER},
-	{"mei-tuan-mobile_1",  				"utm_content=",    	'&', 	IMEI_FLAG, 	BREAK_PARSER},
-	{"you-ku-mobile_1",  				"imei=",    		'&', 	IMEI_FLAG, 	CONTINUE_PARSER},
-	{"you-ku-mobile_1",  				"imsi=",    		'&', 	IMSI_FLAG, 	CONTINUE_PARSER},
-	{"you-ku-mobile_1",  				"mob=%2B",    		'&', 	PHONE_FLAG, BREAK_PARSER},
-	{"ai-qi-yi-mobile_1",				"qyid=",    		'&', 	IMEI_FLAG, 	BREAK_PARSER},
-	{"ku-gou-mobile_1",					"simno=",    		'&', 	IMSI_FLAG, 	CONTINUE_PARSER},
-	{"ku-gou-mobile_1",					"imei=",    		'&', 	IMEI_FLAG, 	BREAK_PARSER},
-	{"PPTV-mobile_1",  					"did=",    			'&', 	IMEI_FLAG, 	CONTINUE_PARSER},
-	{"PPTV-mobile_1",  					"carrier=",    		'&', 	IMSI_FLAG, 	BREAK_PARSER},
-	{"ku-wo-yin-yue-mobile_1",			"cid=",    			'&', 	IMEI_FLAG, 	BREAK_PARSER},
-	{"ku-wo-yin-yue-mobile_2",  		"user=",    		'&', 	IMEI_FLAG, 	CONTINUE_PARSER},
-	{"ku-wo-yin-yue-mobile_2",  		"imsi=",    		'&', 	IMSI_FLAG, 	BREAK_PARSER},
-	{"duo-mi-yin-yue-mobile_1",  		"imei=",    		'&', 	IMEI_FLAG, 	CONTINUE_PARSER},
-	{"duo-mi-yin-yue-mobile_1",  		"imsi=",    		'&', 	IMSI_FLAG, 	CONTINUE_PARSER},
-	{"duo-mi-yin-yue-mobile_1",  		"cn=",    			'&', 	PHONE_FLAG, BREAK_PARSER},
-	{"qq-news-mobile_1",				"devid=",			'&', 	IMEI_FLAG, 	CONTINUE_PARSER},
-	{"qq-news-mobile_1",				"imsi=",			'&', 	IMSI_FLAG, 	BREAK_PARSER},
-	{"tou-tiao-mobile_1",				"uuid=",    		'&', 	IMEI_FLAG, 	BREAK_PARSER},
-	{"bai-du-yin-yue-mobile_1",			"deviceid: ",    	'\r', 	IMEI_FLAG, 	BREAK_PARSER},
-	{"ali-yun-mobile_1",  				"imei=",    		'&', 	IMEI_FLAG, 	CONTINUE_PARSER},
-	{"ali-yun-mobile_1",  				"mob=%2B",    		'&', 	PHONE_FLAG, BREAK_PARSER},
-	{"tian-tian-dong-ting-mobile_1",	"uid=",				'&', 	IMEI_FLAG, 	CONTINUE_PARSER},
-	{"tian-tian-dong-ting-mobile_1",	"imsi=",			'&', 	IMSI_FLAG, 	BREAK_PARSER},
-	{"tian-tian-dong-ting-mobile_2",  	"imsi=",    		'&', 	IMSI_FLAG, 	CONTINUE_PARSER},
-	{"tian-tian-dong-ting-mobile_2",  	"phone=",    		'&', 	PHONE_FLAG, BREAK_PARSER},	
-	{"bai-du-di-tu-mobile_1",			"im=",    			'&', 	IMEI_FLAG, 	BREAK_PARSER},
-	{"bao-feng-ying-yin-mobile_1",		"imei=",    		'&', 	IMEI_FLAG, 	BREAK_PARSER},
-	{"bao-feng-ying-yin-mobile_2",		"uid=",    			'&', 	IMEI_FLAG, 	BREAK_PARSER},
-	{"da-zhong-dian-pin-mobile_1",		"deviceid=",  		'&',	IMEI_FLAG, 	BREAK_PARSER},
-	{"da-zhong-dian-pin-mobile_2",		"imei=",    		'&',	IMEI_FLAG, 	BREAK_PARSER},
+	{"jing-dong-mobile_1",  			"uuid=",    		'-', 	IMEI_FLAG, 	BREAK_PARSER,		0},
+	{"tao-bao-mobile_1",  				"imei=",    		'&', 	IMEI_FLAG, 	CONTINUE_PARSER,	0},
+	{"tao-bao-mobile_1",  				"imsi=",    		'&', 	IMSI_FLAG, 	BREAK_PARSER,		0},
+	{"mei-tuan-mobile_1",  				"utm_content=",    	'&', 	IMEI_FLAG, 	BREAK_PARSER,		0},
+	{"you-ku-mobile_1",  				"imei=",    		'&', 	IMEI_FLAG, 	CONTINUE_PARSER,	0},
+	{"you-ku-mobile_1",  				"imsi=",    		'&', 	IMSI_FLAG, 	CONTINUE_PARSER,	0},
+	{"you-ku-mobile_1",  				"mob=%2B",    		'&', 	PHONE_FLAG, BREAK_PARSER,		0},
+	{"ai-qi-yi-mobile_1",				"qyid=",    		'&', 	IMEI_FLAG, 	BREAK_PARSER,		0},
+	{"ku-gou-mobile_1",					"simno=",    		'&', 	IMSI_FLAG, 	CONTINUE_PARSER,	0},
+	{"ku-gou-mobile_1",					"imei=",    		'&', 	IMEI_FLAG, 	BREAK_PARSER,		0},
+	{"PPTV-mobile_1",  					"did=",    			'&', 	IMEI_FLAG, 	CONTINUE_PARSER,	0},
+	{"PPTV-mobile_1",  					"carrier=",    		'&', 	IMSI_FLAG, 	BREAK_PARSER,		0},
+	{"ku-wo-yin-yue-mobile_1",			"cid=",    			'&', 	IMEI_FLAG, 	BREAK_PARSER,		0},
+	{"ku-wo-yin-yue-mobile_2",  		"user=",    		'&', 	IMEI_FLAG, 	CONTINUE_PARSER,	0},
+	{"ku-wo-yin-yue-mobile_2",  		"imsi=",    		'&', 	IMSI_FLAG, 	BREAK_PARSER,		0},
+	{"duo-mi-yin-yue-mobile_1",  		"imei=",    		'&', 	IMEI_FLAG, 	CONTINUE_PARSER,	0},
+	{"duo-mi-yin-yue-mobile_1",  		"imsi=",    		'&', 	IMSI_FLAG, 	CONTINUE_PARSER,	0},
+	{"duo-mi-yin-yue-mobile_1",  		"cn=",    			'&', 	PHONE_FLAG, BREAK_PARSER,		0},
+	{"qq-news-mobile_1",				"devid=",			'&', 	IMEI_FLAG, 	CONTINUE_PARSER,	0},
+	{"qq-news-mobile_1",				"imsi=",			'&', 	IMSI_FLAG, 	BREAK_PARSER,		0},
+	{"tou-tiao-mobile_1",				"uuid=",    		'&', 	IMEI_FLAG, 	BREAK_PARSER,		0},
+	{"bai-du-yin-yue-mobile_1",			"deviceid: ",    	'\r', 	IMEI_FLAG, 	BREAK_PARSER,		0},
+	{"ali-yun-mobile_1",  				"imei=",    		'&', 	IMEI_FLAG, 	CONTINUE_PARSER,	0},
+	{"ali-yun-mobile_1",  				"mob=%2B",    		'&', 	PHONE_FLAG, BREAK_PARSER,		0},
+	{"tian-tian-dong-ting-mobile_1",	"uid=",				'&', 	IMEI_FLAG, 	CONTINUE_PARSER,	0},
+	{"tian-tian-dong-ting-mobile_1",	"imsi=",			'&', 	IMSI_FLAG, 	BREAK_PARSER,		0},
+	{"tian-tian-dong-ting-mobile_2",  	"imsi=",    		'&', 	IMSI_FLAG, 	CONTINUE_PARSER,	0},
+	{"tian-tian-dong-ting-mobile_2",  	"phone=",    		'&', 	PHONE_FLAG, BREAK_PARSER,		0},	
+	{"bai-du-di-tu-mobile_1",			"im=",    			'&', 	IMEI_FLAG, 	BREAK_PARSER,		0},
+	{"bao-feng-ying-yin-mobile_1",		"imei=",    		'&', 	IMEI_FLAG, 	BREAK_PARSER,		0},
+	{"bao-feng-ying-yin-mobile_2",		"uid=",    			'&', 	IMEI_FLAG, 	BREAK_PARSER,		0},
+	{"da-zhong-dian-pin-mobile_1",		"deviceid=",  		'&',	IMEI_FLAG, 	BREAK_PARSER,		0},
+	{"da-zhong-dian-pin-mobile_2",		"imei=",    		'&',	IMEI_FLAG, 	BREAK_PARSER,		0},
+	{"wifi-wan-neng-yao-shi_1",			"ii=",    			'&',	IMEI_FLAG, 	BREAK_PARSER,		0},
+	{"wifi-wan-neng-yao-shi_2",			"imei=",    		'&',	IMEI_FLAG, 	BREAK_PARSER,		0},
+	{"dang-dang-mobile_1",				"imei=",    		'&',	IMEI_FLAG, 	BREAK_PARSER,		0},
+	{"mo-ji-tian-qi-mobile_2",			"IMEI=",    		' ',	IMEI_FLAG, 	CONTINUE_PARSER,	0},
+	{"mo-ji-tian-qi-mobile_2",			"IMEI=",    		'&',	IMEI_FLAG, 	BREAK_PARSER,		0},
+	{"hao-dou-cai-pu-mobile_1",			"deviceid=haodou",  '&',	IMEI_FLAG, 	BREAK_PARSER,		0},
+	{"le-an-quan_2",					"deviceid=",  		' ',	IMEI_FLAG, 	CONTINUE_PARSER,	0},
+	{"le-an-quan_2",					"did=",  			'&',	IMEI_FLAG, 	BREAK_PARSER,		0},
+	{"ren-ren-mobile_1",				"imei%22%3A%22",  	'%',	IMEI_FLAG, 	BREAK_PARSER,		0},
+	/*注意此处往下是需要挎包提取特征的*/
+	{"mo-ji-tian-qi-mobile_1",			"identifier\":\"",  '\"',	IMEI_FLAG, 	BREAK_PARSER,		1},
+	{"le-an-quan_1",					"imei\x01",  		'\x01',	IMEI_FLAG, 	BREAK_PARSER,		1},
     /*注意不要越界，END 为结束标志*/
 	{"END", "", ' '},
 };
@@ -53,6 +65,8 @@ MOBILE_INFO_NODE_S g_stNodeMobileInfo[MOBILE_INFO_NODE_MAX] = {
 HS_rwlock_t g_stMobileInfoNodeRwlock;
 
 UINT32 g_uNodeMobileInfoNum = 0;
+UINT32 g_uNodeMobileInfoMarkStart = 0;
+
 
 extern UCHAR *DPI_StrnStr(UCHAR *pucSrc, UCHAR *pucSub, UINT32 uSrcLen);
 extern UCHAR *DPI_StrnChr(UCHAR *pucSrc, UCHAR ucSub, UINT32 uSrcLen, UINT32  uSeq);
@@ -62,6 +76,7 @@ VOID Mobile_Info_GlobalNode_Init()
 {
     UINT32    uIndex = 0;
     UINT32    uAppid = 0;
+	UINT32	  uFlag = 0;
     MOBILE_INFO_NODE_S  *pstNode = NULL;
 
     for (uIndex = 0; uIndex < MOBILE_INFO_NODE_MAX; uIndex++)
@@ -71,6 +86,13 @@ VOID Mobile_Info_GlobalNode_Init()
         {
             break;
         }
+
+		if (uFlag == 0 && pstNode->mark_flag == 1)
+		{
+			uFlag = 1;
+			g_uNodeMobileInfoMarkStart = g_uNodeMobileInfoNum;
+			
+		}
 
         uAppid = HS_FindAppIdByAppName(pstNode->name, LANG_EN);
         pstNode->appid = uAppid;
@@ -104,11 +126,20 @@ int Mobile_Info_Process(HS_CTX_S *pstCtx, HS_PKT_DETAIL_S *pstDetail, void **pri
 	uNodeNum = g_uNodeMobileInfoNum;
     uLen_Data = pstDetail->length;
 
+	if (HS_PLUGIN_UNMARKED(pstCtx, HS_HOOK_POST_DPI, HS_PLUGIN_MOBILEINFO))
+	{
+		uIndex = 0;
+	}
+	else
+	{
+		uIndex = g_uNodeMobileInfoMarkStart;
+	}
+
 #if 0
 	pstCtx->pstMobileInfo = NULL;
 #endif
 
-	for (uIndex = 0; uIndex < uNodeNum; uIndex++)
+	for (; uIndex < uNodeNum; uIndex++)
     {
     	pucSigStart = NULL;
     	pucSigStartTmp = NULL;
@@ -116,10 +147,27 @@ int Mobile_Info_Process(HS_CTX_S *pstCtx, HS_PKT_DETAIL_S *pstDetail, void **pri
     	uLen_Tmp = 0;
 		
         pstNode = &(g_stNodeMobileInfo[uIndex]);
-        if (pstCtx->appid != pstNode->appid)
-        {
-            continue;
-        }
+
+		if (HS_PLUGIN_UNMARKED(pstCtx, HS_HOOK_POST_DPI, HS_PLUGIN_MOBILEINFO))
+		{
+	        if (pstCtx->appid != pstNode->appid)
+	        {
+	            continue;
+	        }
+
+			if (pstNode->mark_flag == 1)
+			{
+				HS_PLUGIN_SET_MARKED(pstCtx, HS_HOOK_POST_DPI, HS_PLUGIN_MOBILEINFO);
+				return HS_OK;
+			}
+		}
+		else
+		{
+			if (pstCtx->appid != MASK_VERSION(pstNode->appid))
+	        {
+	            continue;
+	        }
+		}
 
         //HS_SET_MARKED(pstCtx->flag);
         pucSigStart = DPI_StrnStr(pstDetail->data, pstNode->sig_start, uLen_Data);
@@ -180,6 +228,11 @@ int Mobile_Info_Process(HS_CTX_S *pstCtx, HS_PKT_DETAIL_S *pstDetail, void **pri
             }
         }
     }
+
+	if(pstNode->mark_flag == 1)
+	{
+		HS_PLUGIN_SET_UNMARKED(pstCtx, HS_HOOK_POST_DPI, HS_PLUGIN_MOBILEINFO);
+	}
 
 #if 1
 
