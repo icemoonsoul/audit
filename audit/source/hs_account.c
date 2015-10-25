@@ -15,6 +15,8 @@ HS_rwlock_t g_stAccountRwlock;
 LIST_HEAD_S g_stAccountHookHead;
 
 static u32 g_appid_qq_chat_mobile;
+static u32 g_appid_weixin_mobile;
+
 
 static u32 g_appid_qq_chat;
 static u32 g_appid_wang_wang_chat;
@@ -626,6 +628,75 @@ static int QQ_Mobile_Init(void)
 
     return ACCOUNT_CreateHook(ACCOUNT_HOOK_QQ_MOBILE, QQ_Mobile_Process, NULL, NULL);
 }
+
+static int Weixin_Mobile_Process(HS_CTX_S *pstCtx, HS_PKT_DETAIL_S *pstDetail, void *priv)
+{
+    u32  probe_count;
+    u32  account;
+    u32  app_id;
+    u32  len_data = 0;
+    s32  index = 0;
+    char buff[16];
+    u8   flag = 0;
+    u8   len = 0;
+
+    UCHAR *data = NULL;
+
+    app_id = atomic_read(&pstCtx->appid);  
+    
+    if (app_id != g_appid_weixin_mobile) {
+        return HS_OK;
+    }
+    
+    HS_PLUGIN_DEAL_STAT(HS_PLUGIN_ACCOUNT);
+
+    len_data = pstDetail->length;
+    if (len_data < 25) {
+        return HS_OK;
+    }
+
+    data = pstDetail->data;
+    if (NULL == data) {
+        return HS_OK;
+    }
+    
+    // 00 00 08 38 00 10 00 01  00 00 00 fe 00 00 00 02
+    // a2 9f 26 02 05 33 34 4d  cc fe c0 02 08 02 d1 4c
+    if ((data[18] == 0x26) && (data[19] == 0x02) && (data[20] == 0x05)) {
+        memcpy((UCHAR *)&account, data + 21, 4);
+    }
+    else {
+        return HS_OK;
+    }
+
+    HS_WRITE_LOCK_CTX(pstCtx);
+    pstCtx->pstAccount = hs_malloc(sizeof(struct app_account));
+    if (pstCtx->pstAccount != NULL)
+    {
+        memset(pstCtx->pstAccount, 0, sizeof(struct app_account));
+        pstCtx->pstAccount->account_type = ACCOUNT_WEIXIN_MOBILE;
+        sprintf(pstCtx->pstAccount->account_buff, "%u", account);
+		HS_PLUGIN_IDENTIFY_STAT(HS_PLUGIN_ACCOUNT);
+    }
+
+    HS_WRITE_UNLOCK_CTX(pstCtx);
+
+    return HS_OK;
+    
+}
+
+static int Weixin_Mobile_Init(void)
+{
+    g_appid_weixin_mobile = GetAppId(DPI_WEIXIN_MOBILE);
+
+    if (IS_UNKNOWN_ID(g_appid_weixin_mobile)) {
+        HS_INFO("account cann't find app(%s)\n", DPI_WEIXIN_MOBILE);
+        return HS_ERR;
+    }
+
+    return ACCOUNT_CreateHook(ACCOUNT_HOOK_WEIXIN_MOBILE, Weixin_Mobile_Process, NULL, NULL);
+}
+
 
 
 /*新浪微博账户:手机号、邮箱*/
@@ -2267,6 +2338,7 @@ int HS_Account_Init(void)
 	DoubanLogin_Init();
 
     QQ_Mobile_Init();
+    Weixin_Mobile_Init();
     /* account plugin end */
 
     return HS_OK;
