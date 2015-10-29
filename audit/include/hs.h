@@ -72,6 +72,7 @@ typedef struct {
     struct skype_conn *pstSkypeConn;
     struct app_account *pstAccount;
     struct mobile_info *pstMobileInfo;
+	struct smtp_data_info *smtp_info;
     HS_time_t	create_ts;
     INT32       enPluginType;
     void        *priv_data;
