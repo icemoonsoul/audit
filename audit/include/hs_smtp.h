@@ -27,9 +27,6 @@
 #define 	MIME_CONTENT_BASE64 1
 #define 	MIME_CONTENT_NOBASE64 0
 
-
-#define		MIME_BUFF_LEN	128
-
 typedef struct mail_data_info
 {
     int mail_flag;
