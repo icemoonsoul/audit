@@ -8,10 +8,12 @@
 #include "hs_stat.h"
 #include "hs_smtp.h"
 
+#define MIME_BUFF_MAX	128
+#define BASE64_MAX		76
+
 const char * base64char = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
 extern UCHAR *DPI_StrnStr(UCHAR *pucSrc, UCHAR *pucSub, UINT32 uSrcLen);
-extern UCHAR *DPI_StrnChr(UCHAR *pucSrc, UCHAR ucSub, UINT32 uSrcLen, UINT32  uSeq);
 
 int base64_decode( const char * base64, unsigned char * bindata )
 {
@@ -87,8 +89,8 @@ INT32 mime_process_to(char *data, int len, FILE *fp)
 
     int state = 0;
 
-    char ptmp[SMTP_BUFF_LEN] = {0};
-    unsigned  char pdecode[SMTP_BUFF_LEN] = {0};
+    char ptmp[MIME_BUFF_LEN] = {0};
+    unsigned  char pdecode[MIME_BUFF_LEN] = {0};
     int base64 = 0;
 
     while(pStart < pdata_end)
@@ -104,7 +106,7 @@ INT32 mime_process_to(char *data, int len, FILE *fp)
 
             state = pEnd - pStart;
 
-			if(state >= SMTP_BUFF_LEN)
+			if(state >= MIME_BUFF_LEN)
 			{
 				return 1;
 			}
@@ -130,7 +132,7 @@ INT32 mime_process_to(char *data, int len, FILE *fp)
         }
 
         state = pEnd - pStart;
-		if(state >= SMTP_BUFF_LEN)
+		if(state >= MIME_BUFF_LEN)
 		{
 			return 1;
 		}
@@ -144,13 +146,345 @@ INT32 mime_process_to(char *data, int len, FILE *fp)
     return 0;
 }
 
-INT32 dpi_mime_process(char *data, int len, SMTP_DATA_INFO *psmtpInfo, FILE *fp)
+INT32 mime_parse_head_method(char *data, int len, MIME_HEAD_INFO_S *pstMime_head_info)
+{
+    char *pIndex = NULL;
+    char *pState = NULL;
+    char *pDataLimit = NULL;
+    char *pTmp = NULL;
+    int flag = 0;
+	int limit = 0;
+
+    pDataLimit = data + len;
+    pState = data;
+
+	limit = pDataLimit - pState;
+    pIndex = DPI_StrnStr(pState, MIME_FROM, limit);
+    if(pIndex != NULL)
+    {
+        pState = pIndex + strlen(MIME_FROM);
+
+		limit = pDataLimit - pState;
+        pIndex = DPI_StrnStr(pState, "\r\n", limit);
+        if(pIndex == NULL)
+        {
+            return HS_ERR;
+        }
+        
+        pstMime_head_info->arrInfo[MIME_HEAD_FROM].pucData = pState;
+        pstMime_head_info->arrInfo[MIME_HEAD_FROM].uLen = pIndex - pState;
+
+        pState = pIndex + strlen("\r\n");
+    }
+
+	limit = pDataLimit - pState;
+    pIndex = DPI_StrnStr(pState, MIME_TO, limit);
+    if(pIndex != NULL)
+    {
+        pState = pIndex + strlen(MIME_TO);
+
+        pTmp = pState;
+        while(pTmp < pDataLimit)
+        {
+        	limit = pDataLimit - pTmp;
+            pIndex = DPI_StrnStr(pTmp, "\r\n", limit);
+            if(pIndex == NULL)
+            {
+                return HS_ERR;
+            }
+
+            if (*(pIndex - 1) != ',' && *(pIndex - 2) != ',')
+            {
+                flag = 1;
+                break;
+            }
+            else
+            {
+                flag = 0;
+                pTmp = pIndex + strlen("\r\n");
+            }
+        }
+        
+        if (flag == 0)
+        {
+            return HS_ERR;
+        }
+
+        pstMime_head_info->arrInfo[MIME_HEAD_TO].pucData = pState;
+        pstMime_head_info->arrInfo[MIME_HEAD_TO].uLen = pIndex - pState;
+
+        pState = pIndex + strlen("\r\n");
+        
+    }
+
+	limit = pDataLimit - pState;
+    pIndex = DPI_StrnStr(pState, MIME_SUBJECT, limit);
+    if(pIndex != NULL)
+    {
+        pState = pIndex + strlen(MIME_SUBJECT);
+
+		limit = pDataLimit - pState;
+        pIndex = DPI_StrnStr(pState, "\r\n", limit);
+        if(pIndex == NULL)
+        {
+            return HS_ERR;
+        }
+        
+        pstMime_head_info->arrInfo[MIME_HEAD_SUBJECT].pucData = pState;
+        pstMime_head_info->arrInfo[MIME_HEAD_SUBJECT].uLen = pIndex - pState;
+
+        pState = pIndex + strlen("\r\n");
+    }
+
+    return HS_OK;
+}
+
+void Mime_Write_File_Decode(char *data, int len, FILE *fp)
+{
+	char tmparr[MIME_BUFF_MAX + 1] = {0};
+	char decodearr[MIME_BUFF_MAX + 1] = {0};
+	int index = 0;
+	int limit = 0;
+	char *pIndex = NULL;
+	
+	while(index < len)
+	{
+		pIndex = DPI_StrnStr(data + index, "\r\n", len - index);
+		if (pIndex == NULL)
+		{
+			if ((len - index) > BASE64_MAX)
+			{
+				return;
+			}
+
+			strncpy(tmparr, data + index, len - index);
+
+			tmparr[len - index] = '\0';
+			base64_decode(tmparr, decodearr);
+			decodearr[((len-index) * 3) / 4] = '\0';
+			fprintf(fp, "%s", decodearr);
+
+			return;
+		}
+		else
+		{
+			limit = pIndex - (data + index);
+			if (limit != BASE64_MAX)
+			{
+				return;
+			}
+
+			strncpy(tmparr, data + index, BASE64_MAX);
+			tmparr[BASE64_MAX] = '\0';
+			base64_decode(tmparr, decodearr);
+			decodearr[(BASE64_MAX * 3) / 4] = '\0';
+			fprintf(fp, "%s", decodearr);
+
+			index += BASE64_MAX + 2;
+		}
+	}
+}
+
+void Mime_Write_File(char *data, int len, FILE *fp)
+{
+	char tmparr[MIME_BUFF_MAX + 1] = {0};
+	int index = 0;
+	while(index < len)
+	{
+		if(MIME_BUFF_MAX < (len - index))
+		{
+			strncpy(tmparr, data + index, MIME_BUFF_MAX);
+			tmparr[MIME_BUFF_MAX] = '\0';
+			index += MIME_BUFF_MAX;
+			fprintf(fp, "%s", tmparr);
+		}
+		else
+		{
+			strncpy(tmparr, data + index, len - index);
+			tmparr[len - index] = '\0';
+			fprintf(fp, "%s", tmparr);
+			return;
+		}
+	}
+
+	return;
+}
+
+void Mime_HeadInfo_Extracted(MIME_HEAD_INFO_S *pstMime_head_info, FILE *fp)
+{
+	int i = 0;
+	char tmparr[MIME_BUFF_MAX] = {0};
+	char *pMethod_End;
+	char *pState;
+	char *pIndex;
+	int limit = 0;
+
+	for (i = 0; i < MIME_HEAD_MAX; i++)
+	{
+		if (pstMime_head_info->arrInfo[i].pucData != NULL)
+		{
+			if (i == MIME_HEAD_FROM)
+			{
+				fprintf(fp, "发件人: \r\n");
+			}
+			else if (i == MIME_HEAD_TO)
+			{
+				fprintf(fp, "收件人: \r\n");
+			}
+			else if (i == MIME_HEAD_SUBJECT)
+			{
+				fprintf(fp, "标题: \r\n");
+			}	
+		
+			pState = pstMime_head_info->arrInfo[i].pucData;
+			pMethod_End = pstMime_head_info->arrInfo[i].pucData + pstMime_head_info->arrInfo[i].uLen;
+			while (pState < pMethod_End)
+			{
+				limit = pMethod_End - pState;
+				pIndex = DPI_StrnStr(pState, GB2312_KEY, limit);
+				if (pIndex == NULL)
+				{
+					Mime_Write_File(pState, limit, fp);
+					break;
+				}
+				else
+				{
+					limit = pIndex - pState;
+					if (limit != 0)
+					{
+						Mime_Write_File(pState, limit, fp);
+					}
+
+					pState = pIndex + strlen(GB2312_KEY);
+					limit = pMethod_End - pState;
+					pIndex = DPI_StrnStr(pState, GB2312_END, limit);
+					if(pIndex == NULL)
+					{
+						break;
+					}
+
+					limit = pIndex - pState;
+					Mime_Write_File_Decode(pState, limit, fp);
+
+					pState = pIndex + strlen(GB2312_END);
+				}
+			}
+		}
+		fprintf(fp, "\r\n");
+	}
+
+	return;
+}
+
+INT32 mime_head_process(char *data, int len, MAIL_DATA_INFO *psmtpInfo, FILE *fp)
+{
+	int ret = 0;
+	MIME_HEAD_INFO_S stMime_head_info;
+	memset(&stMime_head_info, 0, sizeof(MIME_HEAD_INFO_S));
+	
+    ret = mime_parse_head_method(data, len, &stMime_head_info);
+	if (ret != HS_OK)
+	{
+		return HS_ERR;
+	}
+
+	Mime_HeadInfo_Extracted(&stMime_head_info, fp);
+
+    return HS_OK;
+}
+
+INT32 mime_body_process(char *data, int len, MAIL_DATA_INFO *psmtpInfo, FILE *fp)
+{
+	char *pIndex = NULL;
+	char *pState = NULL;
+	char *pDataLimit = NULL;
+	int limit = 0;
+
+	pState = data;
+	pDataLimit = pState + len;
+
+	if (psmtpInfo->mail_flag == MIME_BODY)
+	{
+		pIndex = smtp_data_move(pState, pDataLimit, MIME_CONTENT_KEY);
+		if (pIndex == NULL)
+		{
+			return HS_ERR;
+		}
+
+		psmtpInfo->mail_flag = MIME_CONTENT;
+		pState = pIndex;
+	}
+
+	if (psmtpInfo->mail_flag == MIME_CONTENT)
+	{
+		pIndex = smtp_data_move(pState, pDataLimit, MIME_TEXT_ENCODE);
+		if (pIndex == NULL)
+		{
+			return HS_ERR;
+		}
+
+		if(!strncmp(pIndex, BASE64_KEY, strlen(BASE64_KEY)))
+		{
+			psmtpInfo->base64_flag = MIME_CONTENT_BASE64;
+		}
+		else
+		{
+			psmtpInfo->base64_flag = MIME_CONTENT_NOBASE64;
+		}
+
+		psmtpInfo->mail_flag = MIME_CONTENT_ENCODE;
+		pState = pIndex;
+	}
+
+	if (psmtpInfo->mail_flag == MIME_CONTENT_ENCODE)
+	{
+		pIndex = smtp_data_move(pState, pDataLimit, MIME_PART_KEY);
+		if (pIndex == NULL)
+		{
+			return HS_OK;
+		}
+
+		psmtpInfo->mail_flag = MIME_CONTENT_START;
+
+		fprintf(fp, "邮件正文: \r\n");
+
+		pState = pIndex;
+	}
+
+	if (psmtpInfo->mail_flag == MIME_CONTENT_START)
+	{
+		pIndex = DPI_StrnStr(pState, MIME_PART_KEY, pDataLimit - pState);
+		if (pIndex == NULL)
+		{
+			limit = pDataLimit - pState;
+			
+		}
+		else
+		{
+			limit = pIndex - pState;
+			psmtpInfo->mail_flag = MIME_CONTENT_END;
+		}
+
+		if (psmtpInfo->base64_flag == MIME_CONTENT_BASE64)
+		{
+			Mime_Write_File_Decode(pState, limit, fp);
+		}
+		else if (psmtpInfo->base64_flag == MIME_CONTENT_NOBASE64)
+		{
+			Mime_Write_File(pState, limit, fp);
+		}
+	}
+
+	return HS_OK;
+}
+
+INT32 HS_Mime_Process(char *data, int len, MAIL_DATA_INFO *psmtpInfo, FILE *fp)
 {
     char *pdata_end = NULL;
     char *pIndex = NULL;
     char *pStart = NULL;
     char *pEnd = NULL;
-    int ret;
+    int ret = 0;;
     int state = 0;
 	int limit = 0;
 
@@ -163,325 +497,39 @@ INT32 dpi_mime_process(char *data, int len, SMTP_DATA_INFO *psmtpInfo, FILE *fp)
 
     if (data == NULL || psmtpInfo == NULL || fp == NULL)
     {
-        return SMTP_END;
+        return MIME_END;
     }
 
-    pIndex = DPI_StrnStr(data, SMTP_DATA_END, len);
-    if(pIndex == NULL || pIndex > pdata_end)
+	limit = pdata_end - data;
+	
+    pIndex = DPI_StrnStr(data, SMTP_DATA_END, limit);
+    if(pIndex != NULL)
     {
-        ret = SMTP_END;
+        ret = MIME_END;
     }
 
-    if (psmtpInfo->smtp_flag == SMTP_DATA)
+    if(psmtpInfo->mail_flag == MIME_HEAD)
     {
-        pStart = smtp_data_move(pStart, pdata_end, MIME_FROM);
-        if (pStart == NULL)
-        {
-            return 1;
-        }
-
-        psmtpInfo->smtp_flag = MIME_FROM_START;
+        mime_head_process(data, len, psmtpInfo, fp);
+		psmtpInfo->mail_flag = MIME_BODY;
     }
 
-    if (psmtpInfo->smtp_flag == MIME_FROM_START)
-    {
-        pIndex = smtp_data_move(pStart, pdata_end, GB2312_KEY);
-        if (pIndex != NULL)
-        {
-            pEnd = smtp_data_move(pStart, pdata_end, GB2312_END);
-            if (pEnd == NULL)
-            {
-                return 1;
-            }
+	if(psmtpInfo->mail_flag == MIME_BODY)
+	{
+		mime_body_process(data, len, psmtpInfo, fp);
+	}
 
-            state = pEnd - pStart;
-			if(state >= SMTP_BUFF_LEN)
-			{
-				return 1;
-			}
-            strncpy(ptmp, pStart, state);
-            ptmp[state] = '\0';
-
-            base64_decode(ptmp, pdecode);
-            state = (state * 3) / 4;
-            pdecode[state] = '\0';
-            fprintf(fp, "from:%s", pdecode);
-            pStart = pEnd;
-        }
-        else
-        {
-            fprintf(fp, "from:");
-        }
-
-        pEnd = smtp_data_move(pStart, pdata_end, "\r\n");
-        if (pEnd == NULL)
-        {
-            return 1;
-        }
-
-        state = pEnd - pStart;
-		if(state >= SMTP_BUFF_LEN)
-		{
-			return 1;
-		}
-        strncpy(ptmp, pStart, state);
-        ptmp[state] = '\0';
-        fprintf(fp, "%s", ptmp);
-
-        pStart = pEnd;
-        psmtpInfo->smtp_flag = MIME_FROM_END;
-    }
-
-    if (psmtpInfo->smtp_flag == MIME_FROM_END)
-    {
-        pStart = smtp_data_move(pStart, pdata_end, MIME_TO);
-        if (pStart == NULL)
-        {
-            return 1;
-        }
-
-        psmtpInfo->smtp_flag = MIME_TO_START;
-    }
-
-    if (psmtpInfo->smtp_flag == MIME_TO_START)
-    {
-        pEnd = smtp_data_move(pStart, pdata_end, "\r\n");
-        if (pEnd == NULL)
-        {
-            return 1;
-        }
-
-        state = pEnd - pStart;
-        if (mime_process_to(pStart, state, fp))
-        {
-            return 1;
-        }
-
-        pStart = pEnd;
-        psmtpInfo->smtp_flag = MIME_TO_END;
-    }
-    
-    if (psmtpInfo->smtp_flag == MIME_TO_END)
-    {
-#if 0
-        pIndex = strstr(pStart, MIME_SUBJECT);
-        if (pIndex == NULL)
-        {
-            return 1;
-        }
-
-        pStart = pIndex + strlen(MIME_SUBJECT);
-
-        if (pStart > pdata_end)
-        {
-            return 1;
-        }
-#endif
-        pStart = smtp_data_move(pStart, pdata_end, MIME_SUBJECT);
-        if (pStart == NULL)
-        {
-            return 1;
-        }
-        
-        psmtpInfo->smtp_flag = MIME_SUBJCT_START;
-    }
-
-    if (psmtpInfo->smtp_flag ==MIME_SUBJCT_START)
-    {
-        if (pStart[0] == '=')       /* base64解码 */
-        {
-            pStart = pStart + strlen(GB2312_KEY);
-            if (pStart > pdata_end)
-            {
-                return 1;
-            }
-            base64 = 1;
-        }  
-
-		limit = pdata_end - pStart;
-        pIndex = DPI_StrnStr(pStart, "\r\n", limit);
-        if (pIndex == NULL || pIndex > pdata_end)
-        {
-            return 1;
-        }
-
-        pEnd = pIndex;
-
-        if (base64 == 1)
-        {
-            state = pEnd - pStart;
-			if(state >= SMTP_BUFF_LEN)
-			{
-				return 1;
-			}
-            strncpy(ptmp, pStart, state);
-            ptmp[state] = '\0';
-            
-            base64_decode(ptmp, pdecode);
-            state = (state * 3) / 4;
-            pdecode[state] = 0;
-            fprintf(fp, "%s\r\n", pdecode);
-            base64 = 0;
-        }
-        else
-        {
-            state = pEnd - pStart;
-			if(state >= SMTP_BUFF_LEN)
-			{
-				return 1;
-			}
-            strncpy(ptmp, pStart, state);
-            ptmp[state] = '\0';
-            printf("%s\r\n", ptmp);
-            fprintf(fp, "%s\r\n", ptmp);
-        }
-        psmtpInfo->smtp_flag = MIME_SUBJCT_END;
-
-        pStart = pIndex + strlen("\r\n");
-
-        if (pStart > pdata_end)
-        {
-            return 1;
-        }
-    }
-
-    if (psmtpInfo->smtp_flag == MIME_SUBJCT_END)
-    {
-#if 0
-        pIndex = strstr(pStart, MIME_CONTENT);
-
-        if(pIndex == NULL)
-        {
-            return 1;
-        }
-
-        pStart = pIndex + strlen(MIME_CONTENT);
-
-        if(pStart > pdata_end)
-        {
-            return 0;
-        }
-#endif
-
-        pStart = smtp_data_move(pStart, pdata_end, MIME_CONTENT);
-        if (pStart == NULL)
-        {
-            return 1;
-        }
-        
-        psmtpInfo->smtp_flag = MIME_CONTENT_START;
-    }
-
-    if (psmtpInfo->smtp_flag == MIME_CONTENT_START)
-    {
-#if 0
-        pIndex = strstr(pStart, MIME_TEXT_ENCODE);
-
-        if (pIndex == NULL)
-        {
-            return 1;
-        }
-
-        pStart = pIndex + strlen(MIME_TEXT_ENCODE);
-
-        if(pStart > pdata_end)
-        {
-            return 1;
-        }
-#endif
-        pStart = smtp_data_move(pStart, pdata_end, MIME_TEXT_ENCODE);
-        if (pStart == NULL)
-        {
-            return 1;
-        }
-
-        if(!strncmp(pStart, BASE64_KEY, strlen(BASE64_KEY)))
-        {
-            base64 = 1;
-        }
-
-        psmtpInfo->smtp_flag = MIME_ENCODE_START;
-    }
-
-    if (psmtpInfo->smtp_flag == MIME_ENCODE_START)
-    {
-#if 0
-        pIndex = strstr(pStart, "\r\n\r\n");
-
-        if (pIndex == NULL)
-        {
-            return 1;
-        }
-
-        pStart = pIndex + strlen("\r\n\r\n");
-
-        if (pStart > pdata_end)
-        {
-            return 1;
-        }
-#endif
-        pStart = smtp_data_move(pStart, pdata_end, "\r\n\r\n");
-        if (pStart == NULL)
-        {
-            return 1;
-        }
-
-        psmtpInfo->smtp_flag = MIME_ENCODE_END;
-    }
-
-    if (psmtpInfo->smtp_flag == MIME_ENCODE_END)
-    {
-    	limit = pdata_end - pStart;
-        pIndex = DPI_StrnStr(pStart, "\r\n\r\n", limit);
-
-        if (pIndex == NULL)
-        {
-            return 1;
-        }
-
-        pEnd= pIndex + strlen("\r\n\r\n");
-
-        if (pEnd > pdata_end)
-        {
-            return 1;
-        }
-
-        state = pEnd - pStart;
-		if(state >= SMTP_BUFF_LEN)
-		{
-			return 1;
-		}
-        strncpy(ptmp, pStart, state);
-        ptmp[state] = '\0';
-
-        if (base64 == 1)
-        {
-            base64_decode(ptmp, pdecode);
-            printf("%s\r\n", pdecode);
-            fprintf(fp, "%s\r\n", pdecode);
-        }
-        else
-        {
-            printf("%s\r\n", ptmp);
-            fprintf(fp, "%s\r\n", ptmp);
-        }
-        psmtpInfo->smtp_flag = MIME_CONTENT_END;
-    }
-
-    return 0;
-    
+	return ret;
 }
 
-INT32 dpi_smtp_process(HS_CTX_S *ctx, HS_PKT_DETAIL_S *detail, void **priv)
+INT32 HS_Smtp_Process(HS_CTX_S *ctx, HS_PKT_DETAIL_S *detail, void **priv)
 {
     char *pIndex = NULL;
     char *pdata_start = NULL;
     char *pSmtp_data = NULL;
-    INT32 len = 0;
+    INT32 limit = 0;
     int ret;
-    SMTP_DATA_INFO *smtp_data = (SMTP_DATA_INFO *)ctx->smtp_info;
-    //SMTP_DATA_INFO *smtp_data = &(ctx->smtp_info);
-    char tmp[1024] = {0};
+    MAIL_DATA_INFO *pstMail_info = ctx->pstMail_info;
     time_t rawtime;
     FILE *fp;
     
@@ -494,9 +542,10 @@ INT32 dpi_smtp_process(HS_CTX_S *ctx, HS_PKT_DETAIL_S *detail, void **priv)
     {
 #if 0
         time( &rawtime );
-        sprintf(smtp_data->smtp_log_name, "%d%d-%d.log", detail->tuple.addr.saddr, detail->tuple.addr.source, rawtime);
-        printf("%s\r\n", smtp_data->smtp_log_name);
-#endif		
+        sprintf(smtp_data->mail_log_name, "%d%d-%d.log", detail->tuple.addr.saddr, detail->tuple.addr.source, rawtime);
+        printf("%s\r\n", smtp_data->mail_log_name);
+#endif	
+		//ctx->pstMail_info = pstMail_info = NULL;
         HS_PLUGIN_SET_MARKED(ctx, HS_HOOK_POST_DPI, HS_PLUGIN_SMTP);     
     } 
 
@@ -504,148 +553,61 @@ INT32 dpi_smtp_process(HS_CTX_S *ctx, HS_PKT_DETAIL_S *detail, void **priv)
     {
         return HOOK_ACTION_CONTINUE;
     }
+	
+	pSmtp_data = detail->data;
 
-    if (smtp_data == NULL)
+
+    if (pstMail_info != NULL && pstMail_info->mail_flag != MIME_NONE)
     {
+	    fp = fopen(pstMail_info->mail_log_name, "a+");
+	    if (fp == NULL)
+	    {
+	            return HOOK_ACTION_CONTINUE;
+	    }
+	    fseek(fp, 0L, 2);
+		
+        limit = detail->length;;
 
-        smtp_data = (SMTP_DATA_INFO *) hs_malloc(sizeof(SMTP_DATA_INFO));
-        if(smtp_data == NULL)
-        {
-            return HOOK_ACTION_CONTINUE;
-        }
-        memset(smtp_data, 0, sizeof(SMTP_DATA_INFO));
-
-        ctx->smtp_info = smtp_data;
-
-        
-        time( &rawtime );
-        sprintf(smtp_data->smtp_log_name, "%d%d-%d", detail->tuple.addr.saddr, detail->tuple.addr.source, rawtime);
-        printf("%s\r\n", smtp_data->smtp_log_name);
-        
-    }
-
-    pSmtp_data = detail->data;
-
-    fp = fopen(smtp_data->smtp_log_name, "a+");
-    if (fp == NULL)
-    {
-            return HOOK_ACTION_CONTINUE;
-    }
-    fseek(fp, 0L, 2);
-
-    if (smtp_data != NULL && smtp_data->smtp_flag != SMTP_START)
-    {
-        len = detail->length;;
-
-        ret = dpi_mime_process(pSmtp_data, len, smtp_data, fp);
-        if (ret == SMTP_END)
+        ret = HS_Mime_Process(pSmtp_data, limit, pstMail_info, fp);
+        if (ret == MIME_END)
         {
             HS_PLUGIN_SET_UNMARKED(ctx, HS_HOOK_POST_DPI, HS_PLUGIN_SMTP);
     
             HS_SET_DETECT_SUCCESS(ctx->flag);
         }
+
+		fclose(fp);
+		goto PROCESS_END;
     }
 
-#if 0
-    if ((detail->length > strlen(SMTP_FROM)) && (!strncmp(pSmtp_data, SMTP_FROM, strlen(SMTP_FROM))))
-    {
-        pdata_start = pSmtp_data + strlen(SMTP_FROM);
-        
-        if (pdata_start[0] != '<')
-        {
-            //return HOOK_ACTION_CONTINUE;
-            goto PROCESS_END;
-        }
-        else
-        {
-            pdata_start ++;
-        }
-    
-        pIndex = strchr(pdata_start, '>');
-
-        if (pIndex > (pSmtp_data + detail->length))
-        {
-            //return HOOK_ACTION_CONTINUE;
-            goto PROCESS_END;
-        }
-
-        len = pIndex - pdata_start;
-
-        strncpy(tmp, pdata_start, len);
-
-        tmp[len] = '\0';
-
-        printf("%s\r\n", tmp);
-        fprintf(fp, "%s\r\n", tmp);
-        
-    }
-    else if((detail->length > strlen(SMTP_TO)) && (!strncmp(pSmtp_data, SMTP_TO, strlen(SMTP_TO))))
-    {
-        pdata_start = pSmtp_data + strlen(SMTP_TO);
-        
-        if (pdata_start[0] != '<')
-        {
-            //return HOOK_ACTION_CONTINUE;
-            goto PROCESS_END;
-        }
-        else
-        {
-            pdata_start ++;
-        }
-    
-        pIndex = strchr(pdata_start, '>');
-
-        if (pIndex > (pSmtp_data + detail->length))
-        {
-            //return HOOK_ACTION_CONTINUE;
-            goto PROCESS_END;
-        }
-
-        len = pIndex - pdata_start;
-
-        strncpy(tmp, pdata_start, len);
-
-        tmp[len] = '\0';
-
-        printf("%s\r\n", tmp);
-        fprintf(fp, "%s\r\n", tmp);
-        
-    }
-#endif    
     if((detail->length > strlen(SMTP_DATA_START)) && (!strncmp(pSmtp_data, SMTP_DATA_START, strlen(SMTP_DATA_START))))
     {
-        len = detail->length;
-		if(len >= SMTP_BUFF_LEN)
-		{
-			return 1;
-		}
-        strncpy(tmp, pSmtp_data, len);
-        tmp[len] = '\0';
-        printf("%s\r\n", tmp);
+		if (pstMail_info == NULL)
+	    {
 
-        smtp_data ->smtp_flag = SMTP_DATA;
+	        pstMail_info = (MAIL_DATA_INFO *) hs_malloc(sizeof(MAIL_DATA_INFO));
+	        if(pstMail_info == NULL)
+	        {
+	            return HOOK_ACTION_CONTINUE;
+	        }
+	        memset(pstMail_info, 0, sizeof(MAIL_DATA_INFO));
+
+	        ctx->pstMail_info = pstMail_info;
+	        
+	        time( &rawtime );			
+	        sprintf(pstMail_info->mail_log_name, "%d%d-%d.log", detail->tuple.addr.saddr, detail->tuple.addr.source, rawtime);	   
+			printf("%s\r\n", pstMail_info->mail_log_name);
+	    }
+
+		pstMail_info ->mail_flag = MIME_HEAD;
     }    
 
 PROCESS_END:
     
-    fclose(fp);
     return HOOK_ACTION_CONTINUE;
 }
 
-void dpi_smtp_destroy(void **priv)
-{
-    return;
-}
-
-void DPI_SMTP_DESTROY_CTX_PRIV(void **priv)
-{
-    if(priv && *priv) {
-        hs_free(*priv);
-        *priv = NULL;
-    }
-}
-
-INT32 dpi_smtp_init(void)
+INT32 HS_Smtp_Init(void)
 {
     INT32 ret;
     HS_HOOK_OPS_S *ops = NULL;
@@ -661,7 +623,7 @@ INT32 dpi_smtp_init(void)
     ops->priority = HS_PLUGIN_SMTP;
     ops->uDependPluginList = 0;
     ops->bEnable = TRUE;
-    ops->fn = dpi_smtp_process;
+    ops->fn = HS_Smtp_Process;
     ops->destroy_fn = NULL;
     ops->pfnCtxPrivDestroy= NULL;
     ops->priv = NULL;
