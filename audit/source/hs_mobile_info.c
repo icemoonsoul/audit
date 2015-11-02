@@ -16,6 +16,7 @@ MOBILE_INFO_NODE_S g_stNodeMobileInfo[MOBILE_INFO_NODE_MAX] = {
 	{"jing-dong-mobile_1",  			"uuid=",    		'-', 	IMEI_FLAG, 	BREAK_PARSER,		0},
 	{"tao-bao-mobile_1",  				"imei=",    		'&', 	IMEI_FLAG, 	CONTINUE_PARSER,	0},
 	{"tao-bao-mobile_1",  				"imsi=",    		'&', 	IMSI_FLAG, 	BREAK_PARSER,		0},
+	{"tao-bao-mobile_3",  				"deviceid=",    	'&', 	IMEI_FLAG, 	BREAK_PARSER,		0},
 	{"mei-tuan-mobile_1",  				"utm_content=",    	'&', 	IMEI_FLAG, 	BREAK_PARSER,		0},
 	{"you-ku-mobile_1",  				"imei=",    		'&', 	IMEI_FLAG, 	CONTINUE_PARSER,	0},
 	{"you-ku-mobile_1",  				"imsi=",    		'&', 	IMSI_FLAG, 	CONTINUE_PARSER,	0},
@@ -41,11 +42,16 @@ MOBILE_INFO_NODE_S g_stNodeMobileInfo[MOBILE_INFO_NODE_MAX] = {
 	{"tian-tian-dong-ting-mobile_1",	"imsi=",			'&', 	IMSI_FLAG, 	BREAK_PARSER,		0},
 	{"tian-tian-dong-ting-mobile_2",  	"imsi=",    		'&', 	IMSI_FLAG, 	CONTINUE_PARSER,	0},
 	{"tian-tian-dong-ting-mobile_2",  	"phone=",    		'&', 	PHONE_FLAG, BREAK_PARSER,		0},	
-	{"bai-du-di-tu-mobile_1",			"im=",    			'&', 	IMEI_FLAG, 	BREAK_PARSER,		0},
+	{"bai-du-di-tu-mobile_1",			"im=",    			'&', 	IMEI_FLAG, 	CONTINUE_PARSER,	0},
+	{"bai-du-di-tu-mobile_1",			"imei=",    		'&', 	IMEI_FLAG, 	BREAK_PARSER,		0},
+	{"bai-du-di-tu-mobile_2",			"openudid=",    	'&', 	IMEI_FLAG, 	BREAK_PARSER,		0},
+	{"bai-du-di-tu-mobile_3",			"imei=",	    	'&', 	IMEI_FLAG, 	BREAK_PARSER,		0},
 	{"bao-feng-ying-yin-mobile_1",		"imei=",    		'&', 	IMEI_FLAG, 	BREAK_PARSER,		0},
 	{"bao-feng-ying-yin-mobile_2",		"uid=",    			'&', 	IMEI_FLAG, 	BREAK_PARSER,		0},
 	{"da-zhong-dian-pin-mobile_1",		"deviceid=",  		'&',	IMEI_FLAG, 	BREAK_PARSER,		0},
 	{"da-zhong-dian-pin-mobile_2",		"imei=",    		'&',	IMEI_FLAG, 	BREAK_PARSER,		0},
+	{"da-zhong-dian-pin-mobile_3",		"pragma-device: ",  '\r',	IMEI_FLAG, 	BREAK_PARSER,		0},
+	{"da-zhong-dian-pin-mobile_4",		"device\":\"",  	'\"',	IMEI_FLAG, 	BREAK_PARSER,		0},
 	{"wifi-wan-neng-yao-shi_1",			"ii=",    			'&',	IMEI_FLAG, 	BREAK_PARSER,		0},
 	{"wifi-wan-neng-yao-shi_2",			"imei=",    		'&',	IMEI_FLAG, 	BREAK_PARSER,		0},
 	{"dang-dang-mobile_1",				"imei=",    		'&',	IMEI_FLAG, 	BREAK_PARSER,		0},
@@ -178,7 +184,7 @@ int Mobile_Info_Process(HS_CTX_S *pstCtx, HS_PKT_DETAIL_S *pstDetail, void **pri
             if (NULL != pucSigEndTmp) 
             {
 				uLen_Tmp = pucSigEndTmp - pucSigStartTmp;
-				if ((uLen_Tmp <= 0) || (pstNode->type_info == IMEI_FLAG && uLen_Tmp >= (IMEI_INFO_MAX))
+				if ((uLen_Tmp < 0) || (pstNode->type_info == IMEI_FLAG && uLen_Tmp >= (IMEI_INFO_MAX))
 					|| (pstNode->type_info == IMSI_FLAG && uLen_Tmp >= (IMSI_INFO_MAX))
 					|| (pstNode->type_info == PHONE_FLAG && uLen_Tmp >= (PHONE_INFO_MAX)))
 			    {
