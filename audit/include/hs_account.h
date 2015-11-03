@@ -10,6 +10,7 @@
 #define ACCOUNT_SACN_POP3NUM_MAX    6
 
 #define DPI_WEIXIN_MOBILE			"wei-xin-mobile_1"
+#define DPI_WEIXIN_MOBILE_2			"wei-xin-mobile_2"
 #define DPI_QQ_CHAT_MOBILE			"qq-chat-mobile_3"
 #define DPI_QQ_CHAT					"qq-chat_5"
 #define DPI_SINA_WEIBO_LOGIN		"sina-wei-bo_12_login"
@@ -89,6 +90,7 @@ typedef enum {
 
 typedef enum {
     ACCOUNT_HOOK_WEIXIN_MOBILE,
+	ACCOUNT_HOOK_WEIXIN_MOBILE_2,
     ACCOUNT_HOOK_QQ_MOBILE,
     ACCOUNT_HOOK_QQ,
     ACCOUNT_HOOK_SINA_WEI_BO,

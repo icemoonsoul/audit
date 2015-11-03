@@ -16,6 +16,8 @@ LIST_HEAD_S g_stAccountHookHead;
 
 static u32 g_appid_qq_chat_mobile;
 static u32 g_appid_weixin_mobile;
+static u32 g_appid_weixin_mobile_2;
+
 
 
 static u32 g_appid_qq_chat;
@@ -629,6 +631,55 @@ static int QQ_Mobile_Init(void)
     return ACCOUNT_CreateHook(ACCOUNT_HOOK_QQ_MOBILE, QQ_Mobile_Process, NULL, NULL);
 }
 
+static int Weixin_Mobile_Process_2(HS_CTX_S *pstCtx, HS_PKT_DETAIL_S *pstDetail, void *priv)
+{
+	u32  app_id;
+	u32  len = 0;
+	u8  *pState = 0;
+	u32	 uid = 0;
+	
+	app_id = atomic_read(&pstCtx->appid);  
+    
+    if (app_id != g_appid_weixin_mobile_2) {
+        return HS_OK;
+    }
+
+	len = pstDetail->length;
+
+	pState = DPI_StrnStr(pstDetail->data, "\r\n\r\n", len);
+	if (pState == NULL)
+	{
+		return HS_OK;
+	}
+	pState += strlen("\r\n\r\n");
+
+	if((pState + 11) > (pstDetail->data + len))
+	{
+		return HS_OK;
+	}
+
+	uid = pState[7] * 16*16*16*16*16*16 + pState[8] * 16*16*16*16 + pState[9] * 16*16 + pState[10];
+
+	HS_WRITE_LOCK_CTX(pstCtx);
+
+	if (pstCtx ->pstAccount == NULL)
+	{
+	    pstCtx->pstAccount = hs_malloc(sizeof(struct app_account));
+	    if (pstCtx->pstAccount == NULL)
+	    {
+	        return HS_OK;
+	        
+	    }
+		memset(pstCtx->pstAccount, 0, sizeof(struct app_account));
+	}
+
+	pstCtx->pstAccount->account_type = ACCOUNT_WEIXIN_MOBILE;
+	sprintf(pstCtx->pstAccount->account_buff, "%d", uid);
+
+    HS_WRITE_UNLOCK_CTX(pstCtx);	
+	
+}
+
 static int Weixin_Mobile_Process(HS_CTX_S *pstCtx, HS_PKT_DETAIL_S *pstDetail, void *priv)
 {
     u32  probe_count;
@@ -696,6 +747,19 @@ static int Weixin_Mobile_Init(void)
 
     return ACCOUNT_CreateHook(ACCOUNT_HOOK_WEIXIN_MOBILE, Weixin_Mobile_Process, NULL, NULL);
 }
+
+static int Weixin_Mobile_Init_2(void)
+{
+    g_appid_weixin_mobile_2 = GetAppId(DPI_WEIXIN_MOBILE_2);
+
+    if (IS_UNKNOWN_ID(g_appid_weixin_mobile_2)) {
+        HS_INFO("account cann't find app(%s)\n", DPI_WEIXIN_MOBILE_2);
+        return HS_ERR;
+    }
+
+    return ACCOUNT_CreateHook(ACCOUNT_HOOK_WEIXIN_MOBILE_2, Weixin_Mobile_Process_2, NULL, NULL);
+}
+
 
 
 
@@ -2338,7 +2402,8 @@ int HS_Account_Init(void)
 	DoubanLogin_Init();
 
     QQ_Mobile_Init();
-    Weixin_Mobile_Init();
+    //Weixin_Mobile_Init();
+	Weixin_Mobile_Init_2();
     /* account plugin end */
 
     return HS_OK;
