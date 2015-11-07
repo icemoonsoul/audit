@@ -110,6 +110,8 @@ ACCOUNT_NODE_ASCII_S g_stNodeAccount_Ascii[ACCOUNT_NODE_NUM] = {
     {"mo-mo_1",                   "X-KV: ",              '\r', "%2540", "@", 1},
     {"tao-bao-mobile_2",          "tracknick=",          ';', "%2540", "@", 1},
 
+    {"wei-pin-hui-mobile_1",      "userid=",              '&', "%2540", "@", 1},
+    {"e-le-me-mobile_1",          "USERID=",              ';', "%2540", "@", 1},
 
 
     /*注意不要越界，END 为结束标志*/
@@ -552,12 +554,6 @@ static int QQ_Mobile_Process(HS_CTX_S *pstCtx, HS_PKT_DETAIL_S *pstDetail, void 
     u8   len = 0;
 
     app_id = atomic_read(&pstCtx->appid);
-    probe_count = pstDetail->uProcCount;
-
-    /* probe_count limitation*/
-    if (probe_count > 10) {
-        return HS_OK;
-    }    
     
     if (MASK_VERSION(app_id) != MASK_VERSION(g_appid_qq_chat_mobile)) {
         return HS_OK;
@@ -603,15 +599,29 @@ static int QQ_Mobile_Process(HS_CTX_S *pstCtx, HS_PKT_DETAIL_S *pstDetail, void 
     }
 
     HS_WRITE_LOCK_CTX(pstCtx);
-    pstCtx->pstAccount = hs_malloc(sizeof(struct app_account));
-    if (pstCtx->pstAccount != NULL)
+    if (NULL == pstCtx->pstAccount)
     {
-        memset(pstCtx->pstAccount, 0, sizeof(struct app_account));
-        pstCtx->pstAccount->account_type = ACCOUNT_QQ_CHAT;
-        memcpy(pstCtx->pstAccount->account_buff, buff, len);
-		HS_PLUGIN_IDENTIFY_STAT(HS_PLUGIN_ACCOUNT);
-        HS_PLUGIN_SET_UNMARKED(pstCtx,HS_HOOK_POST_DPI, HS_PLUGIN_ACCOUNT);
+        pstCtx->pstAccount = hs_malloc(sizeof(struct app_account));
+        if (pstCtx->pstAccount != NULL)
+        {
+            memset(pstCtx->pstAccount, 0, sizeof(struct app_account));
+            pstCtx->pstAccount->account_type = ACCOUNT_QQ_CHAT;
+            memset(pstCtx->pstAccount->account_buff, 0, ACCOUNT_MAX_LEN);
+            memcpy(pstCtx->pstAccount->account_buff, buff, len);
+    		HS_PLUGIN_IDENTIFY_STAT(HS_PLUGIN_ACCOUNT);
+        } 
     }
+    else
+    {
+        if (0 != strncmp(pstCtx->pstAccount->account_buff, buff, ACCOUNT_MAX_LEN-1))
+        {
+            memset(pstCtx->pstAccount->account_buff, 0, ACCOUNT_MAX_LEN);
+            memcpy(pstCtx->pstAccount->account_buff, buff, len);
+            pstCtx->pstAccount->flag = ACCOUNT_GET_OTHER;
+        }   
+    }
+  
+    HS_PLUGIN_SET_MARKED(pstCtx,HS_HOOK_POST_DPI, HS_PLUGIN_ACCOUNT);
 
     HS_WRITE_UNLOCK_CTX(pstCtx);
 
@@ -713,7 +723,7 @@ static int Weixin_Mobile_Process(HS_CTX_S *pstCtx, HS_PKT_DETAIL_S *pstDetail, v
     
     // 00 00 08 38 00 10 00 01  00 00 00 fe 00 00 00 02
     // a2 9f 26 02 05 33 34 4d  cc fe c0 02 08 02 d1 4c
-    if ((data[18] == 0x26) && (data[19] == 0x02) && (data[20] == 0x05)) {
+    if ((data[18] == 0x26) && (data[19] < 0x05) && (data[20] == 0x05)) {
         memcpy((UCHAR *)&account, data + 21, 4);
     }
     else {
@@ -2333,10 +2343,12 @@ int Account_Process(HS_CTX_S *pstCtx, HS_PKT_DETAIL_S *pstDetail, void **priv)
 
     Account_AnalyzeProtocol(pstCtx, pstDetail, pstCtx->appid);
 
+    if (pstCtx->pstAccount == NULL)
+    {
+        return HS_OK;
+    }
 
-
-	/* 部分连接，需要进一步识别 */
-    if (pstCtx->pstAccount != NULL)
+    if ((pstCtx->pstAccount->flag == ACCOUNT_GET_FIRST) || (pstCtx->pstAccount->flag == ACCOUNT_GET_OTHER))
 	{
 	    CHAR app[ACCOUNT_MAX_LEN];
         CHAR ip[16];
@@ -2344,13 +2356,8 @@ int Account_Process(HS_CTX_S *pstCtx, HS_PKT_DETAIL_S *pstDetail, void **priv)
         HS_FindAppNameByAppId(MASK_VERSION(pstCtx->appid), LANG_EN, app, ACCOUNT_MAX_LEN);
         HS_PRINT("[ACCOUNT]%s: %-40s account: %-50s\n", ip, app, pstCtx->pstAccount->account_buff);
         HS_WARN("[ACCOUNT]%s: %-40s account: %-50s\n", ip, app, pstCtx->pstAccount->account_buff);
-
-        if (pstCtx->pstAccount->flag > 0) {
-           HS_PLUGIN_SET_UNMARKED_ALL(pstCtx);
-           HS_PLUGIN_SET_MARKED(pstCtx, HS_HOOK_DPI, HS_PLUGIN_CONTENT);
-           HS_PLUGIN_SET_MARKED(pstCtx, HS_HOOK_POST_DPI, HS_PLUGIN_ACCOUNT);
-        }
-	}
+        pstCtx->pstAccount->flag = ACCOUNT_GET_MAX;
+    }
 	
     return HS_OK;
 }

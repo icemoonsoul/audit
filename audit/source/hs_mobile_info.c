@@ -61,7 +61,11 @@ MOBILE_INFO_NODE_S g_stNodeMobileInfo[MOBILE_INFO_NODE_MAX] = {
 	{"le-an-quan_2",					"deviceid=",  		' ',	IMEI_FLAG, 	CONTINUE_PARSER,	0},
 	{"le-an-quan_2",					"did=",  			'&',	IMEI_FLAG, 	BREAK_PARSER,		0},
 	{"ren-ren-mobile_1",				"imei%22%3A%22",  	'%',	IMEI_FLAG, 	BREAK_PARSER,		0},
-	/*注意此处往下是需要挎包提取特征的*/
+    {"zhi-fu-bao-mobile_1",				"userId=",  	    '&',	IMEI_FLAG, 	BREAK_PARSER,		0}, 
+
+    {"di-di-chu-xing_1",                "imei=",    		'&',	IMEI_FLAG, 	BREAK_PARSER,		0},
+
+    /*注意此处往下是需要挎包提取特征的*/
 	{"mo-ji-tian-qi-mobile_1",			"identifier\":\"",  '\"',	IMEI_FLAG, 	BREAK_PARSER,		1},
 	{"le-an-quan_1",					"imei\x01",  		'\x01',	IMEI_FLAG, 	BREAK_PARSER,		1},
     /*注意不要越界，END 为结束标志*/
