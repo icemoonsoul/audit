@@ -533,4 +533,14 @@ int IAPF_convert_words(char *convbuf, int len);
 
 void HS_Qsort (void *base, UINT32 nel, UINT32 width, INT32 (*comp)(const void *, const void *));
 
+UINT32 HS_ICONV_Convert(const char *to, const char *from, char *in, size_t in_len, char *out, size_t out_len);
+
+int HS_htoi(char *s);
+
+char *HS_URL_Encode(char const *s, int len, int *new_length);
+
+int HS_URL_Decode(char *data, int len, char *dest, int dest_len);
+
+UINT32 HS_MakeTime(struct timeval tv, CHAR *pcBuff, UINT32 uLen);
+
 #endif

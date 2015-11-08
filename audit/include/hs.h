@@ -55,6 +55,8 @@ typedef struct pkt_detail {
 	struct tuple5 tuple;
 	INT32 side; 		/* outside or inside */
 	INT32 direct; 		/* client or server */
+    CHAR src_mac[6];
+    CHAR dst_mac[6];
 	UINT32 length; 
 	UCHAR *data;
 	HS_time_t ts;
@@ -72,6 +74,7 @@ typedef struct {
     struct skype_conn *pstSkypeConn;
     struct app_account *pstAccount;
     struct mobile_info *pstMobileInfo;
+    struct post_info *pstPost;
 	struct mail_data_info *pstMail_info;
     HS_time_t	create_ts;
     INT32       enPluginType;

@@ -10,6 +10,11 @@
 #include "hs_core.h"
 #include "hs_stat.h"
 #include "hs_account.h"
+#include "hs_http.h"
+
+FILE *g_pstVidLog = NULL;
+static HS_time_t vid_ts;
+UINT32 vid_ts_delta = 60;
 
 HS_rwlock_t g_stAccountRwlock;
 LIST_HEAD_S g_stAccountHookHead;
@@ -2211,6 +2216,72 @@ static int RenRen_Init(VOID)
 	return ACCOUNT_CreateHook(ACCOUNT_HOOK_RENREN, RenRen_Process, NULL, NULL);
 }
 
+static INT32 OutputVid(const CHAR *pcLogMod, HS_time_t tv, CHAR *pcBuff)
+{
+    CHAR log_name[64];
+
+START:
+    if (g_pstVidLog == NULL) {
+        AssignLogName(pcLogMod, tv, log_name, sizeof(log_name));
+        g_pstVidLog = fopen(log_name, "w+");
+        if (g_pstVidLog == NULL) {
+            return HS_ERR;
+        }
+
+        vid_ts = tv;
+    }
+
+    if (tv.tv_sec > vid_ts.tv_sec + vid_ts_delta) {
+        fclose(g_pstVidLog);
+        g_pstVidLog = NULL;
+        goto START;
+    }
+
+    fwrite(pcBuff, 1, strlen(pcBuff), g_pstVidLog);
+    fwrite("\r\n", 1, 2, g_pstVidLog);
+
+    return HS_OK;
+}
+
+void LogVid(HS_PKT_DETAIL_S *pstDetail, CHAR *pcApp, CHAR *pcAccount, CHAR *pcAction)
+{
+    char buff[1024];
+    UINT32 uLen = 0;
+
+    if (pcApp == NULL || pcAccount == NULL) {
+        return;
+    }
+
+    if (strlen(pcApp) == 0 || strlen(pcAccount) == 0) {
+        return;
+    }
+
+    uLen += HS_MakeTime(pstDetail->ts, buff, sizeof(buff));
+    buff[uLen++] = '\t';
+
+    uLen += HS_MakeTuple6(pstDetail, buff + uLen, sizeof(buff) - uLen);
+    buff[uLen++] = '\t';
+
+    memcpy(buff + uLen, pcApp, strlen(pcApp));
+    uLen += strlen(pcApp);
+    buff[uLen++] = '\t';
+    
+    memcpy(buff + uLen, pcAccount, strlen(pcAccount));
+    uLen += strlen(pcAccount);
+    buff[uLen++] = '\t';
+    
+    if (pcAction == NULL || strlen(pcAction) == 0) {
+        memcpy(buff + uLen, "unknown", strlen("unknown"));
+        uLen += strlen("unknown");
+        buff[uLen++] = '\t';
+    }
+    
+    buff[uLen++] = '\0';
+
+    HS_PRINT("%s\n", buff);
+    OutputVid("gw_vid", pstDetail->ts,buff);
+}
+
 VOID  Account_AnalyzeProtocol(HS_CTX_S *pstCtx, HS_PKT_DETAIL_S *pstDetail, UINT32 uAppid)
 {
     INT32     iRet = 0;
@@ -2317,6 +2388,7 @@ FOUND:
     HS_FindAppNameByAppId(MASK_VERSION(pstCtx->appid), LANG_EN, app, ACCOUNT_MAX_LEN);
     HS_PRINT("[ACCOUNT]%s: %-40s account: %-50s\n", ip, app, ucAccount);
     HS_WARN("[ACCOUNT]%s: %-40s account: %-50s\n", ip, app, ucAccount);
+    LogVid(pstDetail, app, ucAccount, NULL);
     
     return;
 }
@@ -2356,6 +2428,7 @@ int Account_Process(HS_CTX_S *pstCtx, HS_PKT_DETAIL_S *pstDetail, void **priv)
         HS_FindAppNameByAppId(MASK_VERSION(pstCtx->appid), LANG_EN, app, ACCOUNT_MAX_LEN);
         HS_PRINT("[ACCOUNT]%s: %-40s account: %-50s\n", ip, app, pstCtx->pstAccount->account_buff);
         HS_WARN("[ACCOUNT]%s: %-40s account: %-50s\n", ip, app, pstCtx->pstAccount->account_buff);
+		LogVid(pstDetail, app, pstCtx->pstAccount->account_buff, NULL);
         pstCtx->pstAccount->flag = ACCOUNT_GET_MAX;
     }
 	

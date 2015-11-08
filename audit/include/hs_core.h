@@ -68,6 +68,7 @@ typedef enum {
 	HS_PLUGIN_HOST,
 	HS_PLUGIN_ACCOUNT,
 	HS_PLUGIN_MOBILEINFO,
+	HS_PLUGIN_POST,
 	HS_PLUGIN_SMTP,
 	HS_PLUGIN_POP3,
 	HS_PLUGIN_MAX
@@ -86,7 +87,9 @@ typedef enum {
 #define PLUGIN_NAME_HOST        "host"
 #define PLUGIN_NAME_ACCOUNT     "account"
 #define PLUGIN_NAME_MOBILEINFO  "mobile_info"
-
+#define PLUGIN_NAME_POST        "post"
+#define PLUGIN_NAME_SMTP        "smtp"
+#define PLUGIN_NAME_POP3        "pop3"
 
 typedef enum APP_ATTR_TYPE {
 	APP_ATTR_EN,

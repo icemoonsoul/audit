@@ -762,8 +762,7 @@ void process_tcp(u_char * data, int skblen)
             add_new_tcp(this_tcphdr, this_iphdr);
         }
         
-        from_client = 1;
-        //return;
+        return;
     }
 
     if (from_client) {

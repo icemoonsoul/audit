@@ -1,0 +1,6 @@
+TOOLCHAIN_PREFIX=
+
+CC          = ${TOOLCHAIN_PREFIX}gcc
+STRIP       = ${TOOLCHAIN_PREFIX}strip
+AR          = ${TOOLCHAIN_PREFIX}ar
+RANLIB      = ${TOOLCHAIN_PREFIX}ranlib
