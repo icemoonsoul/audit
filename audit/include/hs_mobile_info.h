@@ -10,7 +10,7 @@
 #define IMEI_INFO_MAX				16
 #define IMSI_INFO_MAX				16
 #define PHONE_INFO_MAX				16
-#define MOBILE_INFO_NODE_MAX 		64
+#define MOBILE_INFO_NODE_MAX 		96
 
 #define HS_SET_MOBILE_INFO_MARKED(flag, move)			((flag) |= (1 << move))
 #define HS_TEST_MOBILE_INFO_MARKED(flag, move)			(flag & 1 << move)
