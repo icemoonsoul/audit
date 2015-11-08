@@ -329,6 +329,9 @@ void process_udp(char *data)
 		a_udp = add_new_udp(udph, iph);
 
 		a_udp->nids_state = NIDS_JUST_EST;
+        
+        memcpy(a_udp->dst_mac, data - nids_linkoffset, 6);
+        memcpy(a_udp->src_mac, data - nids_linkoffset + 6, 6);
 
 		a_udp->server.count_new = ulen - sizeof(struct udphdr);
 		a_udp->server.data = app_data;
@@ -372,6 +375,10 @@ void process_udp(char *data)
 
 		return;
 	}
+
+    
+    memcpy(a_udp->dst_mac, data - nids_linkoffset, 6);
+    memcpy(a_udp->src_mac, data - nids_linkoffset + 6, 6);
 
 	if(from_client) {
 		a_udp->server.count_new = ulen - sizeof(struct udphdr);
