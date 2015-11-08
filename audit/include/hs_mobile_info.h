@@ -7,10 +7,17 @@
 #define SIG_BUF_LEN          		16
 
 
+<<<<<<< HEAD
 #define IMEI_INFO_MAX				16
 #define IMSI_INFO_MAX				16
 #define PHONE_INFO_MAX				16
 #define MOBILE_INFO_NODE_MAX 		96
+=======
+#define IMEI_INFO_MAX				32
+#define IMSI_INFO_MAX				32
+#define PHONE_INFO_MAX				32
+#define MOBILE_INFO_NODE_MAX 		64
+>>>>>>> 673192177931fdc0ddf90ddcdd2908637871f7b1
 
 #define HS_SET_MOBILE_INFO_MARKED(flag, move)			((flag) |= (1 << move))
 #define HS_TEST_MOBILE_INFO_MARKED(flag, move)			(flag & 1 << move)

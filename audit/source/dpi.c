@@ -95,6 +95,9 @@ static void HS_tcp_process_data(struct tcp_stream *tcp, void **priv)
 		}
 	}
 
+    memcpy(stDetail.dst_mac, tcp->dst_mac, 6);
+    memcpy(stDetail.src_mac, tcp->src_mac, 6);
+    
 	if (tcp->server.count_new) {
 		/* client -> server */
 		stDetail.direct = DIR_C2S;
@@ -105,7 +108,9 @@ static void HS_tcp_process_data(struct tcp_stream *tcp, void **priv)
 		stDetail.direct = DIR_S2C;
 		stDetail.data = (UCHAR *)tcp->client.data;
 		stDetail.length = tcp->client.count_new;
-	}
+	} else {
+        return;
+    }
 
 	HS_Probe(pstCtx, &stDetail);
 
@@ -229,7 +234,9 @@ static void HS_udp_process_data(struct udp_stream *udp, void **priv)
 	stDetail.tuple.protocol = UDP_PROTOCOL;
 	stDetail.tuple.addr = udp->addr;
 	stDetail.ts = g_latest_ts;
-
+    memcpy(stDetail.dst_mac, udp->dst_mac, 6);
+    memcpy(stDetail.src_mac, udp->src_mac, 6);
+    
 	if (udp->server.count_new) {
 		/* client -> server */
 		stDetail.direct = DIR_C2S;
@@ -240,7 +247,9 @@ static void HS_udp_process_data(struct udp_stream *udp, void **priv)
 		stDetail.direct = DIR_S2C;
 		stDetail.data = (UCHAR *)udp->client.data;
 		stDetail.length = udp->client.count_new;
-	}
+	} else {
+        return;
+    }
 
 	HS_Probe(pstCtx, &stDetail);
 

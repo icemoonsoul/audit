@@ -500,7 +500,7 @@ INT32 HS_Smtp_Process(HS_CTX_S *ctx, HS_PKT_DETAIL_S *detail, void **priv)
 	    }
 	    fseek(fp, 0L, 2);
 		
-        limit = detail->length;;
+        limit = detail->length;
 
         ret = HS_Mime_Process(pSmtp_data, limit, pstMail_info, fp);
         if (ret == MIME_END)
@@ -570,7 +570,7 @@ INT32 HS_Smtp_Init(void)
 
     return HS_OK;
 
-    ERROR:
+ERROR:
     if(ops)
     {
         HS_UnregisterHook(ops->hooknum, ops->priority);

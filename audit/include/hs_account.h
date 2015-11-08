@@ -109,6 +109,14 @@ typedef enum {
     ACCOUNT_HOOK_MAX
 } ACCOUNT_HOOK_E;
 
+typedef enum {
+    ACCOUNT_GET_FIRST = 0,
+    ACCOUNT_GET_OTHER = 1,
+
+    ACCOUNT_GET_MAX
+} ;
+
+
 typedef struct app_account {
     DPI_ACCOUNT_E		 account_type;
 	CHAR                 flag;

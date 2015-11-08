@@ -92,8 +92,12 @@ static inline UCHAR * HTTP_LocateColonBlank(UCHAR *pucData, UINT32 uLen)
     return NULL;
 }
 
+INT32 HTTP_RequestParse(HTTP_HEAD_INFO_S *pstHeadInfo, HS_PKT_DETAIL_S *pstDetail);
+
 UINT32 HTTP_RequestProcess(HS_PKT_DETAIL_S *pstDetail);
 
 void Init_HttpFiledMap(void);
+
+UINT32 AssignLogName(const CHAR *pcLogMod, HS_time_t tv, CHAR *pcLogName, UINT32 uLogNameLen);
 
 #endif

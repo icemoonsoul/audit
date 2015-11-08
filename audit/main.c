@@ -140,7 +140,7 @@ void dpi_handler(u_char * par, const struct pcap_pkthdr *hdr, const u_char *data
     DPI_Process(hdr, data);
 }
 
-int main(int argc, char **argv)
+int main1(int argc, char **argv)
 {
     int iRet;
     char nids_errbuf[PCAP_ERRBUF_SIZE];
@@ -193,4 +193,37 @@ int main(int argc, char **argv)
     DPI_Exit();
 
     return 0;
+}
+
+#include "hs.smtp.h"
+
+extern void Mime_HeadInfo_Extracted(MIME_HEAD_INFO_S *pstMime_head_info, FILE *fp);
+
+int main(void)
+{
+	MIME_HEAD_INFO_S info;
+	FILE *fp;
+	char test1[1024] = "=?gb2312?B?u9i4tDogMjIzMzMzMzMzMzMzMzMzMzMzMzM=?=";
+	char test2[1024] = "sec2302 <sec2302@opzoon23.com>, \r\n.sec2301 <sec2301@opzoon23.com>";
+	char test3[1024] = "=?gb2312?B?t6K078nPsLTKsbXYt73I9rWpt6iwtMqxtdi3vbCutc/J+reiyeS147eiyfq3osnkteOwtMqxtcS3\r\nosnkteO3qLC0yrG1xLeiyfqwtMqxsKG3qLC4yc8NCreit6LJ+reiyfqwtMqxtcS3osn6sLTKsbXE?=";
+
+	info.arrInfo[0].pucData = test1;
+	info.arrInfo[0].uLen = strlen(test1);
+	info.arrInfo[1].pucData = test1;
+	info.arrInfo[1].uLen = strlen(test2);
+	info.arrInfo[2].pucData = test1;
+	info.arrInfo[2].uLen = strlen(test2);
+
+	fp = fopen("1.log", "a+");
+    if (fp == NULL)
+    {
+            return HOOK_ACTION_CONTINUE;
+    }
+    fseek(fp, 0L, 2);
+
+	Mime_HeadInfo_Extracted(&info, fp);
+	
+	fclose(fp);
+	
+	
 }

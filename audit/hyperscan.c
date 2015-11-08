@@ -141,7 +141,9 @@ void HS_tcp_process_data(struct tcp_stream *tcp, void **priv)
 		stDetail.direct = DIR_S2C;
 		stDetail.data = (UCHAR *)tcp->client.data;
 		stDetail.length = tcp->client.count_new;
-	}
+	} else {
+        return;
+    }
 
 	HS_Probe(pstCtx, &stDetail);
 
@@ -278,7 +280,9 @@ void HS_udp_process_data(struct udp_stream *udp, void **priv)
 		stDetail.direct = DIR_S2C;
 		stDetail.data = (UCHAR *)udp->client.data;
 		stDetail.length = udp->client.count_new;
-	}
+	} else {
+        return;
+    }
 
 	HS_Probe(pstCtx, &stDetail);
 

@@ -6,7 +6,7 @@ PDE_PACKET=1
 PDE_SESSION=2
 
 
-ENG_VERSION_VALUE=HyperScan-4.1.2
+ENG_VERSION_VALUE=HyperScan-4.1.3
 ENG_RELEASE_TIME_VALUE=$(shell date +%F)
 
 ifeq (${MODE}, ${USERSPACE})
@@ -14,12 +14,8 @@ ifeq (${MODE}, ${USERSPACE})
 #						     user space                                   #
 ###########################################################################
 PDE_MODE=1
-#include ${PWD}/Makefile.inc
+include ../makefile.toolchain
 
-CC      = gcc 
-STRIP   = strip
-AR      = ar
-RANLIB  = ranlib
 PWD     = $(shell pwd)
 ROOT    = ${PWD}/../
 LIBMXML = ${ROOT}/libmxml
@@ -53,6 +49,9 @@ LDFLAGS =  -L/usr/lib -lpthread -lm
 SRCS_1 = ${SRCS} \
 		hs_account.c	\
 		hs_mobile_info.c \
+		hs_post.c \
+		hs_smtp.c \
+		hs_pop3.c \
 		dpi.c \
 
 OBJS = $(SRCS:.c=.o)

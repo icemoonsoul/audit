@@ -1,10 +1,8 @@
 ###########################################################################
 #						      user space                                  #
 ###########################################################################
-CC      	= gcc 
-STRIP   	= strip
-AR      	= ar
-RANLIB  	= ranlib
+include makefile.toolchain
+
 PWD 		= $(shell pwd)
 HS_INCLUDE	= ${PWD}/include
 LIBHS		= ${PWD}/source
@@ -29,6 +27,7 @@ LDFLAGS =  -L/usr/lib -L/usr/local/lib/ -lpthread -lm
 SRCS = 	hyperscan.c main.c
 
 OBJS = $(SRCS:.c=.o)
+OBJS1 = ${LIBHS}/hs_account.o ${LIBHS}/hs_mobile_info.o ${LIBHS}/hs_post.o ${LIBHS}/hs_smtp.o ${LIBHS}/hs_pop3.o
 
 LIBDIR 		= ./source ./libnids ./zlog
 
@@ -57,12 +56,14 @@ target:
 	make lib
 	make dpi
 
-hyperscan:hyperscan.o ${LIBHS}/hs_account.o ${LIBHS}/hs_mobile_info.o
-	${CC} -o hyperscan hyperscan.o ${LIBHS}/hs_account.o ${LIBHS}/hs_mobile_info.o ${CFLAGS} ${LDFLAGS} ${SUBLIBS} 
+hyperscan:hyperscan.o ${OBJS1}
+	${CC} -o hyperscan hyperscan.o ${OBJS1} \
+		${CFLAGS} ${LDFLAGS} ${SUBLIBS} 
 
-dpi: main.o ${LIBHS}/dpi.o ${LIBHS}/hs_account.o ${LIBHS}/hs_mobile_info.o ${SUBLIBS}
-	${CC} -o dpi main.o ${LIBHS}/dpi.o ${LIBHS}/hs_account.o ${LIBHS}/hs_mobile_info.o ${CFLAGS} ${LDFLAGS} ${SUBLIBS} 
-	${STRIP} dpi
+dpi: main.o ${LIBHS}/dpi.o ${OBJS1} ${SUBLIBS}
+	${CC} -o dpi main.o ${LIBHS}/dpi.o ${OBJS1}\
+		${CFLAGS} ${LDFLAGS} ${SUBLIBS} 
+	#${STRIP} dpi
 
 .c.o:
 	${CC} $(CFLAGS) -o $@ -c $< 
