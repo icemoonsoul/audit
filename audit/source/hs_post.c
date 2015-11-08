@@ -317,7 +317,7 @@ INT32 POST_HeadTruncate(HS_CTX_S *pstCtx, HS_PKT_DETAIL_S *pstDetail)
     }
 }
 
-static INT32 OutputUri(const CHAR *pcLogMod, HS_time_t tv, CHAR *pcBuff)
+static INT32 OutputPost(const CHAR *pcLogMod, HS_time_t tv, CHAR *pcBuff)
 {
     CHAR log_name[64];
 
@@ -419,7 +419,7 @@ INT32 POST_BodyEnd(HS_CTX_S *pstCtx, HS_PKT_DETAIL_S *pstDetail)
 
         HS_PRINT("%s\n", buff);
         HS_WARN("%s\n", buff);
-        OutputUri("gw_Post", pstDetail->ts, buff);
+        OutputPost("gw_Post", pstDetail->ts, buff);
     }
 
     if (pcBuff != NULL) {
