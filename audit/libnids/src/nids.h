@@ -77,7 +77,7 @@ struct half_stream
   char collect;
   char collect_urg;
   u_int traffic_count;      // 这个是从3层开始的流量，需要计算ip头+tcp/udp头
-
+  
   char *data;
   int offset;
   int count;
@@ -107,6 +107,8 @@ struct half_stream
 struct tcp_stream
 {
   struct tuple4 addr;
+  char dst_mac[6];
+  char src_mac[6];
   char nids_state;
   struct lurker_node *listeners;
   struct half_stream client;
@@ -134,6 +136,8 @@ struct half_udp_stream
 
 struct udp_stream {
 	struct tuple4 addr;
+    char dst_mac[6];
+    char src_mac[6];
   	struct lurker_node *listeners;
 	struct half_udp_stream server;	
 	struct half_udp_stream client;	
