@@ -64,7 +64,6 @@ MOBILE_INFO_NODE_S g_stNodeMobileInfo[MOBILE_INFO_NODE_MAX] = {
 	{"le-an-quan_2",					"deviceid=",  		' ',	IMEI_FLAG, 	CONTINUE_PARSER,	0},
 	{"le-an-quan_2",					"did=",  			'&',	IMEI_FLAG, 	BREAK_PARSER,		0},
 	{"ren-ren-mobile_1",				"imei%22%3A%22",  	'%',	IMEI_FLAG, 	BREAK_PARSER,		0},
-<<<<<<< HEAD
 	{"chang-ba-mobile_1",				"imei=",  			'&',	IMEI_FLAG, 	BREAK_PARSER,		0},
 	{"di-di-chu-xing_1",				"imei%22%3A%22",  	'%',	IMEI_FLAG, 	CONTINUE_PARSER,	0},
 	{"di-di-chu-xing_1",				"sim%22%3A%22%2B",  '%',	PHONE_FLAG, CONTINUE_PARSER,	0},
@@ -82,14 +81,9 @@ MOBILE_INFO_NODE_S g_stNodeMobileInfo[MOBILE_INFO_NODE_MAX] = {
 	{"tong-hua-shun-mobile_1",			"number=+", 		'&',	PHONE_FLAG, BREAK_PARSER,		0},
 	{"tong-hua-shun-mobile_2",			"imsi=", 			'\r',	IMSI_FLAG, 	BREAK_PARSER,		0},
 	{"wang-yi-news-mobile_2",			"deviceId\":\"", 	'_',	IMEI_FLAG, 	BREAK_PARSER,		0},
-	/*注意此处往下是需要挎包提取特征的*/
-=======
     {"zhi-fu-bao-mobile_1",				"userId=",  	    '&',	IMEI_FLAG, 	BREAK_PARSER,		0}, 
 
-    {"di-di-chu-xing_1",                "imei=",    		'&',	IMEI_FLAG, 	BREAK_PARSER,		0},
-
     /*注意此处往下是需要挎包提取特征的*/
->>>>>>> 673192177931fdc0ddf90ddcdd2908637871f7b1
 	{"mo-ji-tian-qi-mobile_1",			"identifier\":\"",  '\"',	IMEI_FLAG, 	BREAK_PARSER,		1},
 	{"le-an-quan_1",					"imei\x01",  		'\x01',	IMEI_FLAG, 	BREAK_PARSER,		1},
 	{"le-shi-mobile_1",					"queId%22%3A%22",  	'%',	IMEI_FLAG, 	BREAK_PARSER,		1},
