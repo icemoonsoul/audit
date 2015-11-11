@@ -11,6 +11,7 @@
 #include "hs_stat.h"
 #include "hs_account.h"
 #include "hs_http.h"
+#include "hs_alg.h"
 
 FILE *g_pstVidLog = NULL;
 static HS_time_t vid_ts;
@@ -395,6 +396,69 @@ s32 DPI_StrReplace(UCHAR *pcDst, UCHAR * pcSrc, UCHAR *pcFind, UCHAR *pcRepalce,
     return HS_OK;;
 }
 
+s32 DPI_AscciiToHex(UCHAR cIn, UCHAR *pcOut)
+{
+    if ((cIn >= '0') && (cIn <= '9')) {
+       *pcOut = cIn - '0';
+        return HS_OK;
+    }
+
+    if ((cIn >= 'A') && (cIn <= 'F')) {
+       *pcOut = cIn - 'A' + 10;
+        return HS_OK;
+    }
+
+    if ((cIn >= 'a') && (cIn <= 'f')) {
+       *pcOut = cIn - 'a' + 10;
+        return HS_OK;
+    }
+
+    return HS_ERR;
+}
+
+
+/*\uxxxx\uxxxx*/
+u32 DPI_AscciiToHex_One(UCHAR *pcIn, UINT32 uLenIn, UCHAR *pcOut, UINT32 uLenBuf)
+{
+    UINT32 uI = 0;
+
+    s32 sRet_1, sRet_2, sRet_3, sRet_4;
+    UCHAR ucOut_1, ucOut_2, ucOut_3, ucOut_4;
+    
+    if (NULL == pcIn || NULL == pcOut) {
+        return 0;
+    }
+
+    if (uLenIn % 6) {
+        return 0;
+    }
+
+    /*buf is too little*/ 
+    if (uLenBuf <= 2*(uLenIn / 6)) {
+        return 0;
+    }
+
+    for(uI = 0; uI < (uLenIn / 6); uI++) {
+        if (strncmp((pcIn + 6*uI), "\\u", 2) == 0) {
+            sRet_1 = DPI_AscciiToHex(pcIn[6*uI+2], &ucOut_1);
+            sRet_2 = DPI_AscciiToHex(pcIn[6*uI+3], &ucOut_2);
+            sRet_3 = DPI_AscciiToHex(pcIn[6*uI+4], &ucOut_3);
+            sRet_4 = DPI_AscciiToHex(pcIn[6*uI+5], &ucOut_4);
+
+            if ((HS_ERR == sRet_1) || (HS_ERR == sRet_2) || (HS_ERR == sRet_3) 
+                || (HS_ERR == sRet_4)) 
+            {
+                return 0;
+            }
+
+            pcOut[2*uI] = 16 * ucOut_3 + ucOut_4;
+            pcOut[2*uI+1] = 16 * ucOut_1 + ucOut_2;
+        }
+    }
+
+    return (2 * (uLenIn / 6));
+}
+
 static int dpi_account_check_number(char *data, int length)
 {
     int index = 0;
@@ -579,8 +643,8 @@ static int QQ_Mobile_Process(HS_CTX_S *pstCtx, HS_PKT_DETAIL_S *pstDetail, void 
     for (index = 1; index < (len_data-5); index++) {
         if (HS_OK == dpi_account_check_number(pstDetail->data+index, 5)) {
             len = *(pstDetail->data + index - 1);
-            //margin is 4, min len is 5, max len is 15
-            if ((len < (4 + 5)) || (len > (4 + 15))) { 
+            //margin is 4, min len is 5, max len is 10
+            if ((len < (4 + 5)) || (len > (4 + 10))) { 
                 continue;
             }
 
@@ -2380,6 +2444,22 @@ FOUND:
     {
         return;
     }
+   
+
+    memset(ucBuf, 0, 2*ACCOUNT_MAX_LEN);
+    HS_URL_Decode(ucAccount, uLen_Tmp, ucBuf, 2*ACCOUNT_MAX_LEN);
+    if (0 == strncmp(ucBuf, "\\u", 2)) {
+        memset(ucAccount, 0, 2*ACCOUNT_MAX_LEN);
+        uLen_Tmp = DPI_AscciiToHex_One(ucBuf, strlen(ucBuf), ucAccount, 2*ACCOUNT_MAX_LEN);
+        if (uLen_Tmp <= 0) {
+            return HS_ERR;
+        }
+        memset(ucBuf, 0, 2*ACCOUNT_MAX_LEN);
+        HS_ICONV_Convert("GBK", "unicode", ucAccount, uLen_Tmp, ucBuf, 2*ACCOUNT_MAX_LEN);
+    }
+
+    memset(ucAccount, 0, 2*ACCOUNT_MAX_LEN);
+    strncpy(ucAccount, ucBuf, 2*ACCOUNT_MAX_LEN);
 
     HS_PLUGIN_SET_UNMARKED(pstCtx,HS_HOOK_POST_DPI, HS_PLUGIN_ACCOUNT);
     CHAR app[ACCOUNT_MAX_LEN];
